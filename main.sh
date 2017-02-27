@@ -110,7 +110,7 @@ echo " "
 
 # Lancement du modéle
 if [[ $run != false ]]; then
-    javac Model.java Population.java Individual.java Sigmoid.java Influences.java
+    javac Model.java Population.java Individual.java Sigmoid.java Influences.java Economy.java
     if [[ $? != 0 ]]; then
         exit 0
     fi

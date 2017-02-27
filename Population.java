@@ -67,7 +67,7 @@ public class Population {
         m_influences.print(fw);
     }
 
-    public void iter() {
+    public void iter(final double price) {
         updatePractices();
         updateIdentities();
         updateInfluences();

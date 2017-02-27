@@ -51,7 +51,6 @@ public class Individual {
     }
 
     public double distId( final Individual ind ){
-        System.out.println( "ind.getIdentity().getYield() = " + ind.getIdentity().getYield() );
         return 0.5*( Math.abs(ind.getIdentity().getYield() - m_identity.getYield()) + Math.abs(ind.getIdentity().getEnv() - m_identity.getEnv()) );
     }
 
@@ -118,6 +117,7 @@ public class Individual {
         private Sigmoid m_coef_yield;
         private Sigmoid m_coef_env;
 
+        // l'idée ici est de lier env et yield. Plus env baisse, plus yield baisse. Plus yield augmente, plus env baisse
         Practice(final int yield, final int env){
             m_yield_lvl = yield;
             m_env_lvl = env;

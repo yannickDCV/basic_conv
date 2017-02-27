@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package model.redQueen;
+package model.basic_conv;
 
 import java.util.*;
 import java.io.*;
@@ -26,20 +26,38 @@ import java.io.*;
 public class Economy {
 
     private double m_price;
+    private Scanner m_scan;
 
-    public Economy(final double priceStart) {
-        m_price = priceStart;
+    public Economy( final String fileName ) {
+        try {
+            m_scan = new Scanner(new File(fileName));
+            m_scan.useLocale(Locale.US);
+        } catch (FileNotFoundException e1) { e1.printStackTrace(); }
+        m_price = -1;
     }
 
-    // FIXME abstraction 
-    void public iter(){
-
-        m_price = Utils.stepFromSigmoide(
-
+    public void iter(){
+        if(m_scan.hasNextDouble()) {
+            m_price = m_scan.nextDouble();
+        }
+        else {
+            throw new RuntimeException("Error during reading prices file");
+        }
     } 
 
-    double public getPrice(){ return m_price; }
+    public void printHeaders(final FileWriter fw){
+        try{
+            fw.append("price"+",");
+        }catch(IOException e){ e.printStackTrace(); }
+    }
 
+    public void print(final FileWriter fw){
+        try{
+            fw.append(m_price+",");
+        }catch(IOException e){ e.printStackTrace(); }
+    }
 
-}
+    public double getPrice(){ return m_price; }
+
+};
 

@@ -26,7 +26,9 @@ import java.io.*;
 public class Model {
 
     private final static String m_fileOut ="/home/yannick/model/basic_conv/data.txt";
+    private final static String m_filePrice ="/home/yannick/model/basic_conv/price_5000steps.dat";
     private Population m_population;
+    private Economy m_economy;
 
     public Model(final int popSize) {
 
@@ -35,6 +37,8 @@ public class Model {
         // Individual indToClone = new Individual(identity, practice);
 
         m_population = new Population(popSize);
+        m_economy = new Economy(m_filePrice);
+
 
         // Configuration config = new Configuration();
         // Population m_population = new Population(popSize, config, indToClone);
@@ -43,12 +47,14 @@ public class Model {
     }
 
     public void iter() {
-        m_population.iter();
+        m_economy.iter();
+        m_population.iter(m_economy.getPrice());
     }
 
     public void initPrint(final FileWriter fw){
         try{
             m_population.printHeaders(fw);
+            m_economy.printHeaders(fw);
             fw.append("\n");
         }catch(IOException e){ e.printStackTrace(); }
     }
@@ -56,6 +62,7 @@ public class Model {
     public void print(final FileWriter fw){
         try{
             m_population.print(fw);
+            m_economy.print(fw);
             fw.append("\n");
         }catch(IOException e){ e.printStackTrace(); }
     }
@@ -71,7 +78,6 @@ public class Model {
 
             Model model = new Model(popSize);
             model.initPrint(fw);
-            model.print(fw);
 
             for (int i = 0; i < nbStep; i++) {
                 System.out.println("Iteration " + i);
