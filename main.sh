@@ -124,7 +124,7 @@ fi
 listData=$(head -n 1 $default_dataFile | sed 's/,/ /g' | sort -u)
 for key in $keys; do
     echo "key = $key" 
-    listData=$(echo "$listData" | tr ' ' '\n' | grep $key | tr '\n' ' ')
+    listData=$(echo "$listData" | tr ' ' '\n' | grep "$key" | tr '\n' ' ')
 done
 
 

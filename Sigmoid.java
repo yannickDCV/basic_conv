@@ -40,8 +40,7 @@ public final class Sigmoid {
 
     public Sigmoid (final double xStart){
 
-        if ( xStart < 0. ) { throw new RuntimeException("x in sigmoid can't be inferior or equal to 0"); };
-        if ( xStart > 1. ) { throw new RuntimeException("x in sigmoid can't be superior or equal to 1"); };
+        errorRangeX(xStart, "sigmoid");
 
         m_x=xStart;
         m_coef_steep=1.;
@@ -50,8 +49,7 @@ public final class Sigmoid {
 
     public Sigmoid (final double xStart, final double yMax, final double yMin, final double precision){
 
-        if ( xStart < 0. ) { throw new RuntimeException("x in sigmoid can't be inferior or equal to 0"); };
-        if ( xStart > 1. ) { throw new RuntimeException("x in sigmoid can't be superior or equal to 1"); };
+        errorRangeX(xStart, "sigmoid");
 
         m_x=xStart;
         setCoef(yMax,yMin,precision);
@@ -67,8 +65,7 @@ public final class Sigmoid {
 
     public double logit(double x){
 
-        if ( x < 0. ) { throw new RuntimeException("x in sigmoid can't be inferior or equal to 0"); };
-        if ( x > 1. ) { throw new RuntimeException("x in sigmoid can't be superior or equal to 1"); };
+        errorRangeX(x, "logit");
 
         return Math.log(x/(1-x));
     }
@@ -82,20 +79,26 @@ public final class Sigmoid {
         m_coef_offset = -m_coef_steep*yMin - Math.log( (1./precision)-1);
     }
 
-    private void setOffset(final double newOffset){
-        m_coef_offset = newOffset;
-    }
-
     public void print(final FileWriter fw){
         try{
             fw.append(m_x+ ",");
         }catch(IOException e){ e.printStackTrace(); }
     }
 
+    public void setValue(final double x){ 
+        errorRangeX(x,"sigmoid");
+        m_x = x; 
+    }
+
     public double getValue(){ return m_x; }
 
     public double getValue(final double x){ 
         return (1. / (1. + Math.exp(-( m_coef_steep*x + m_coef_offset )))); 
+    }
+
+    private void errorRangeX( final double x, final String s ){
+        if ( x <= 0. ) { throw new RuntimeException("In "+s+": x can't be inferior or equal to 0"); };
+        if ( x >= 1. ) { throw new RuntimeException("In "+s+": x can't be superior or equal to 1"); };
     }
 
 };

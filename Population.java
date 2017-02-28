@@ -54,10 +54,10 @@ public class Population {
     public void printHeaders(final FileWriter fw){
         try{
             for(int i=0; i<m_individuals.length; i++){
-                fw.append("yieldId"+i+",");
-                fw.append("envId"+i+",");
-                fw.append("yieldPractice"+i+",");
-                fw.append("envPractice"+i+",");
+                fw.append("yieldId_"+i+"_"+",");
+                fw.append("envId_"+i+"_"+",");
+                fw.append("yieldPractice_"+i+"_"+",");
+                fw.append("envPractice_"+i+"_"+",");
             }
             m_influences.printHeaders(fw);
         }catch(IOException e){ e.printStackTrace(); }
@@ -82,7 +82,7 @@ public class Population {
         }
     }
 
-/**/
+/*/*
     // l'identité s'actualise avec la proportion env/yield chez les autres
     // Somme pondérée par l'influence
     private void updateIdentities(){
@@ -134,7 +134,7 @@ public class Population {
     }
     // */
 
-/*/*
+/**/
     private void updateIdentities(){
         // l'identité s'actualise avec le positionnement par rapport aux autres sur le résultat obtenu.
         // Somme pondérée par l'influence
@@ -152,6 +152,36 @@ public class Population {
             envRef = envRef/sumWeights;
             yieldRef = yieldRef/sumWeights;
             m_individuals[i].updateIdentity(yieldRef, envRef);
+        }
+    }
+
+    private void updateAlternative(){
+        // l'alternative est obtenue en faisant la moyenne des proportions de pr.env et pr.yield des individus viables
+        for(int i=0; i<m_individuals.length; i++){
+            double sumWeights = 0.;
+            double sumRef = 0.;
+            double envRef = 0.;
+            double yieldRef = 0.;
+            for(int j=0; j<m_individuals.length; j++){
+                if ( m_individuals[j].isViable() && i != j){ 
+                    envRef += m_individuals[j].getPractice().getEnv();
+                    yieldRef += m_individuals[j].getPractice().getYield();
+                    sumWeights++;
+                }
+            }
+            if ( sumWeights != 0. ){
+                envRef = envRef/sumWeights;
+                yieldRef = yieldRef/sumWeights;
+            }
+
+            // Proportion
+            sumRef = yieldRef + envRef;
+            if ( sumRef != 0. ){
+                yieldRef = yieldRef/sumRef;
+                envRef = envRef/sumRef;
+                m_individuals[i].updateAlternative(yieldRef, envRef);
+            }
+
         }
     }
 

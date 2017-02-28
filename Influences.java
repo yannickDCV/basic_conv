@@ -41,8 +41,8 @@ public class Influences {
     public void printHeaders(final FileWriter fw){
         try{
             for(int i=0; i<m_popSize; i++){
-                fw.append("influence"+i+",");
-                fw.append("nbInfluence"+i+",");
+                fw.append("influence_"+i+"_"+",");
+                fw.append("nbInfluence_"+i+"_"+",");
             }
         }catch(IOException e){ e.printStackTrace(); }
     }

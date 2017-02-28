@@ -29,6 +29,7 @@ public class Individual {
     private int m_id;
     private Practice m_practice;
     private Accounts m_accounts;
+    private Alternative m_alternative;
     // Comment je m'évalue par rapport aux autres
     private Identity m_identity;
 
@@ -45,13 +46,14 @@ public class Individual {
 
     public Identity getIdentity(){ return m_identity; }
     public Practice getPractice(){ return m_practice; }
+    public boolean isViable(){ return m_accounts.isViable(); }
 
     public void print(final FileWriter fw){
         m_identity.print(fw);
         m_practice.print(fw);
     }
 
-    /**/
+    /*/*
     public void updateIdentity(final double yieldRef, final double envRef){
         double diffYield = m_identity.getYield() - yieldRef;
         double diffEnv = m_identity.getEnv() - envRef;
@@ -62,13 +64,17 @@ public class Individual {
     }
     // */
 
-    /*/*
+    /**/
     public void updateIdentity(final double yieldRef, final double envRef){
         double diffYield = m_practice.getYield() - yieldRef;
         double diffEnv = m_practice.getEnv() - envRef;
 
         m_identity.addStepYield(diffYield*Sigmoid.p_tinyStep);
         m_identity.addStepEnv(diffEnv*Sigmoid.p_tinyStep);
+    }
+
+    public void updateAlternative(final double yieldRef, final double envRef){
+        m_alternative.update(yieldRef,envRef);
     }
 
     public double distId( final Individual ind ){
@@ -150,8 +156,8 @@ public class Individual {
         Practice(final int yield, final int env){
             m_yield_lvl = yield;
             m_env_lvl = env;
-            m_coef_yield = new Sigmoid(1.);
-            m_coef_env = new Sigmoid(1.);
+            m_coef_yield = new Sigmoid(Sigmoid.p_max);
+            m_coef_env = new Sigmoid(Sigmoid.p_max);
             computeCoef();
         }
 
@@ -182,12 +188,14 @@ public class Individual {
         private double m_costs;
         private double m_profit;
         private double m_last_profit;
+        private boolean m_isViable;
 
         Accounts(final double income, final double costs){
             m_income = income;
             m_costs = costs;
             m_profit = income - costs;
             m_last_profit = m_profit;
+            m_isViable = true;
         }
 
         Accounts(final Accounts toClone){
@@ -213,7 +221,31 @@ public class Individual {
 
         public double getProfit() { return m_profit; }
         public double getLastProfit() { return m_last_profit; }
+        public boolean isViable() { return m_isViable; }
 
+    };
+
+    public class Alternative{
+        private Sigmoid m_yield;
+        private Sigmoid m_env;
+
+        Alternative(){
+            m_yield = new Sigmoid();
+            m_env = new Sigmoid();
+        }
+
+        public void update(final double yield, final double env){
+            m_yield.setValue(yield);
+            m_yield.setValue(env);
+        }
+
+        public double getYield(){ return m_yield.getValue(); }
+        public double getEnv(){ return m_env.getValue(); }
+
+        public void print(final FileWriter fw){
+            m_yield.print(fw);
+            m_env.print(fw);
+        }
     };
 
 };
