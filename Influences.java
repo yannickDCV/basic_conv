@@ -30,16 +30,9 @@ public class Influences {
     private final double p_threshold=0.5;
 
     private int m_popSize;
-    public Sigmoid m_influence;
     private ConnectivityMatrix m_influences;
 
     public Influences(final int popSize, final double infStart) {
-
-        double xStart = 0.;
-        double yMax = 0.;
-        double yMin = 1.;
-        double precision = 0.0001;
-        m_influence = new Sigmoid(xStart, yMax, yMin, precision);
 
         m_popSize = popSize;
         m_influences = new ConnectivityMatrix(popSize, infStart);
@@ -71,7 +64,6 @@ public class Influences {
             return m_influences.getWeight(i,j);
         }
 
-        public Sigmoid getSig(){ return m_influence; }
 
     private class ConnectivityMatrix{
 

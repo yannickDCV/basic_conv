@@ -28,20 +28,21 @@ public class Individual {
 
     private int m_id;
     private Practice m_practice;
+    private Accounts m_accounts;
     // Comment je m'évalue par rapport aux autres
     private Identity m_identity;
 
-    public Individual(final int id, final Identity identity, final Practice practice){
+    public Individual(final int id, final Identity identity, final Practice practice, final Accounts accounts){
         m_id = id;
         m_identity = new Identity(identity);
         m_practice = new Practice(practice);
+        m_accounts = new Accounts(accounts);
     }
 
-    public Individual(final Individual indToClone){
-        this(indToClone.getId(), indToClone.getIdentity(), indToClone.getPractice());
+    public Individual(final Individual toClone){
+        this(toClone.m_id, toClone.m_identity, toClone.m_practice, toClone.m_accounts);
     }
 
-    public int getId(){ return m_id; }
     public Identity getIdentity(){ return m_identity; }
     public Practice getPractice(){ return m_practice; }
 
@@ -50,27 +51,28 @@ public class Individual {
         m_practice.print(fw);
     }
 
-    public double distId( final Individual ind ){
-        return 0.5*( Math.abs(ind.getIdentity().getYield() - m_identity.getYield()) + Math.abs(ind.getIdentity().getEnv() - m_identity.getEnv()) );
-    }
-
-    /*/*
+    /**/
     public void updateIdentity(final double yieldRef, final double envRef){
         double diffYield = m_identity.getYield() - yieldRef;
         double diffEnv = m_identity.getEnv() - envRef;
 
+        // FIXME 0.1
         m_identity.addStepYield(diffYield*0.1);
         m_identity.addStepEnv(diffEnv*0.1);
     }
-     // */
+    // */
 
-    /**/
+    /*/*
     public void updateIdentity(final double yieldRef, final double envRef){
         double diffYield = m_practice.getYield() - yieldRef;
         double diffEnv = m_practice.getEnv() - envRef;
 
         m_identity.addStepYield(diffYield*Sigmoid.p_tinyStep);
         m_identity.addStepEnv(diffEnv*Sigmoid.p_tinyStep);
+    }
+
+    public double distId( final Individual ind ){
+        return 0.5*( Math.abs(ind.getIdentity().getYield() - m_identity.getYield()) + Math.abs(ind.getIdentity().getEnv() - m_identity.getEnv()) );
     }
      // */
 
@@ -82,6 +84,34 @@ public class Individual {
             m_practice.increaseEnv();
         }
     }
+
+    /*
+    private int computeStrategy(final double probaQuestion, final double probaAcceptProd){
+
+        int strategy = m_strategy;
+
+        // Est-ce que tu vas adopter l'augmentation d'intensification?
+        double rand = Math.random();
+        double probaNeutral = 1 - Math.abs(1-2*probaAcceptProd);
+        if ( rand <= probaNeutral ){
+            strategy = 0;
+        }
+        else {
+            if ( rand  <= probaAcceptProd ){
+                strategy = 1;
+            }
+            else { 
+                strategy = -1;
+            }
+        }
+
+        if ( Math.random() <= m_probaQuestion ){
+            strategy = 0;
+        }
+
+        return strategy;
+    }
+    */
 
     public static class Identity{
         private Sigmoid m_yield;
@@ -117,32 +147,73 @@ public class Individual {
         private Sigmoid m_coef_yield;
         private Sigmoid m_coef_env;
 
-        // l'idée ici est de lier env et yield. Plus env baisse, plus yield baisse. Plus yield augmente, plus env baisse
         Practice(final int yield, final int env){
             m_yield_lvl = yield;
             m_env_lvl = env;
             m_coef_yield = new Sigmoid(1.);
             m_coef_env = new Sigmoid(1.);
+            computeCoef();
         }
 
         Practice(final Practice pr){ this(pr.m_yield_lvl,pr.m_env_lvl); }
 
+        // l'idée ici est de lier env et yield. Plus env baisse, plus CoefYield baisse. Plus yield augmente, plus coefEnv baisse
         private void computeCoef(){
-            // TODO
+            // TODO direct sigmoid
         }
 
         public void increaseYield(){ m_yield_lvl++; this.computeCoef(); }
-        public void increaseEnv(){ m_env_lvl++; this.computeCoef(); }
+        public void increaseEnv(){ m_env_lvl++; computeCoef(); }
 
         public double getYield(){ return (m_coef_yield.getValue()*m_yield_lvl); }
         public double getEnv(){ return (m_coef_env.getValue()*m_env_lvl); }
 
         public void print(final FileWriter fw){
             try{
-                fw.append(this.getYield() + ",");
-                fw.append(this.getEnv()+ ",");
+                fw.append(getYield() + ",");
+                fw.append(getEnv()+ ",");
             }catch(IOException e){ e.printStackTrace(); }
         }
 
     };
+
+    public static class Accounts{
+        private double m_income;
+        private double m_costs;
+        private double m_profit;
+        private double m_last_profit;
+
+        Accounts(final double income, final double costs){
+            m_income = income;
+            m_costs = costs;
+            m_profit = income - costs;
+            m_last_profit = m_profit;
+        }
+
+        Accounts(final Accounts toClone){
+            this(toClone.m_income,toClone.m_costs);
+        }
+
+        public void updateAccounts( final Practice pr, final Economy eco ){
+            m_costs = computeCosts( pr );
+            m_income = computeIncome( pr, eco );
+            m_last_profit = m_profit;
+            m_profit = m_income - m_costs;
+        }
+
+        public double computeCosts( final Practice pr ){
+            // TODO
+            return m_costs;
+        }
+
+        public double computeIncome( final Practice pr, final Economy eco ){
+            // TODO
+            return m_income;
+        }
+
+        public double getProfit() { return m_profit; }
+        public double getLastProfit() { return m_last_profit; }
+
+    };
+
 };

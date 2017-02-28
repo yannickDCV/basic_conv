@@ -30,18 +30,21 @@ public class Population {
     private final Individual[] m_individuals;
     private Influences m_influences;
 
+    // TODO faire classe parameter pour initialisation
     public Population(final int popSize) {
 
         m_popSize = popSize;
         m_individuals = new Individual[popSize];
         m_influences = new Influences(popSize, 0.1);
 
+        Individual.Practice practice = new Individual.Practice(0, 0);
+        Individual.Accounts accounts = new Individual.Accounts(100., 100.);
+
         for(int i=0; i<m_individuals.length; i++){
             double yieldIdStart = Math.random()*0.1 + 0.45;
             double envIdStart = Math.random()*0.1 + 0.45;
             Individual.Identity identity = new Individual.Identity(yieldIdStart, envIdStart);
-            Individual.Practice practice = new Individual.Practice(0, 0);
-            Individual indToAdd = new Individual(i, identity, practice);
+            Individual indToAdd = new Individual(i, identity, practice, accounts);
 
             m_individuals[i] = new Individual(indToAdd);
         }
@@ -79,7 +82,7 @@ public class Population {
         }
     }
 
-/*/*
+/**/
     // l'identité s'actualise avec la proportion env/yield chez les autres
     // Somme pondérée par l'influence
     private void updateIdentities(){
@@ -108,8 +111,9 @@ public class Population {
         }
     }
 
+    // Plus un agent est fort par rapport à moi sur les choses qui me sont importantes, plus je suis influencé par lui
     private void updateInfluences(){
-        // Plus un agent est fort par rapport à moi sur les choses qui me sont importantes, plus je suis influencé par lui
+        Sigmoid sig = new Sigmoid();
         for(int i=0; i<m_individuals.length; i++){
             for(int j=0; j<m_individuals.length; j++){
 
@@ -119,10 +123,10 @@ public class Population {
                 double envPr = m_individuals[i].getPractice().getEnv();
                 double yieldPrOt = m_individuals[j].getPractice().getYield();
                 double envPrOt = m_individuals[j].getPractice().getEnv();
-                double sigDiffYield = m_influences.getSig().getValue(yieldPrOt-yieldPr);
-                double sigDiffEnv = m_influences.getSig().getValue(envPrOt-envPr);
+                double sigDiffYield = sig.getValue(yieldPrOt-yieldPr);
+                double sigDiffEnv = sig.getValue(envPrOt-envPr);
 
-                double inf = 0.5*(yieldId*sigDiffYield + envId*sigDiffEnv);
+                double inf = Math.max(yieldId*sigDiffYield, envId*sigDiffEnv);
 
                 m_influences.setInf(i,j,inf);
             }
@@ -130,7 +134,7 @@ public class Population {
     }
     // */
 
-/**/
+/*/*
     private void updateIdentities(){
         // l'identité s'actualise avec le positionnement par rapport aux autres sur le résultat obtenu.
         // Somme pondérée par l'influence

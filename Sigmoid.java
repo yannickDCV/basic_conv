@@ -32,6 +32,12 @@ public final class Sigmoid {
     private double m_coef_steep;
     private double m_coef_offset;
 
+    public Sigmoid (){
+        m_x=0.5;
+        m_coef_steep=1.;
+        m_coef_offset=0.;
+    } 
+
     public Sigmoid (final double xStart){
 
         if ( xStart < 0. ) { throw new RuntimeException("x in sigmoid can't be inferior or equal to 0"); };
