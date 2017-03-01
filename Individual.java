@@ -27,17 +27,26 @@ import java.util.Random;
 public class Individual {
 
     private int m_id;
+
     private Practice m_practice;
     private Accounts m_accounts;
     private Alternative m_alternative;
-    // Comment je m'évalue par rapport aux autres
     private Identity m_identity;
+
+    private Sigmoid m_doubt;
+    private Sigmoid m_probaAcceptEnv;
+    private Sigmoid m_probaAcceptYield;
 
     public Individual(final int id, final Identity identity, final Practice practice, final Accounts accounts){
         m_id = id;
         m_identity = new Identity(identity);
         m_practice = new Practice(practice);
         m_accounts = new Accounts(accounts);
+        m_alternative = new Alternative();
+
+        m_doubt = new Sigmoid(Sigmoid.p_min);
+        m_probaAcceptEnv = new Sigmoid(m_identity.getEnv());
+        m_probaAcceptYield = new Sigmoid(m_identity.getYield());
     }
 
     public Individual(final Individual toClone){
@@ -48,23 +57,28 @@ public class Individual {
     public Practice getPractice(){ return m_practice; }
     public boolean isViable(){ return m_accounts.isViable(); }
 
+    public void printHeaders(final FileWriter fw){
+        m_identity.printHeaders(fw,m_id);
+        m_practice.printHeaders(fw,m_id);
+        m_alternative.printHeaders(fw,m_id);
+        m_accounts.printHeaders(fw,m_id);
+        try{
+            fw.append("doubt_"+m_id+"_"+",");
+            fw.append("probaAcceptEnv_"+m_id+"_"+",");
+            fw.append("probaAcceptYield_"+m_id+"_"+",");
+        }catch(IOException e){ e.printStackTrace(); }
+    }
+
     public void print(final FileWriter fw){
         m_identity.print(fw);
         m_practice.print(fw);
+        m_alternative.print(fw);
+        m_accounts.print(fw);
+        m_doubt.print(fw);
+        m_probaAcceptEnv.print(fw);
+        m_probaAcceptYield.print(fw);
     }
 
-    /*/*
-    public void updateIdentity(final double yieldRef, final double envRef){
-        double diffYield = m_identity.getYield() - yieldRef;
-        double diffEnv = m_identity.getEnv() - envRef;
-
-        // FIXME 0.1
-        m_identity.addStepYield(diffYield*0.1);
-        m_identity.addStepEnv(diffEnv*0.1);
-    }
-    // */
-
-    /**/
     public void updateIdentity(final double yieldRef, final double envRef){
         double diffYield = m_practice.getYield() - yieldRef;
         double diffEnv = m_practice.getEnv() - envRef;
@@ -73,51 +87,36 @@ public class Individual {
         m_identity.addStepEnv(diffEnv*Sigmoid.p_tinyStep);
     }
 
+    public double distId( final Individual ind ){
+        return 0.5*( Math.abs(ind.getIdentity().getYield() - m_identity.getYield()) + Math.abs(ind.getIdentity().getEnv() - m_identity.getEnv()) );
+    }
+
     public void updateAlternative(final double yieldRef, final double envRef){
         m_alternative.update(yieldRef,envRef);
     }
 
-    public double distId( final Individual ind ){
-        return 0.5*( Math.abs(ind.getIdentity().getYield() - m_identity.getYield()) + Math.abs(ind.getIdentity().getEnv() - m_identity.getEnv()) );
+    public void updateAccounts(final double price){
+        m_accounts.update(m_practice,price);
     }
-     // */
 
     public void updatePractice(){
-        if ( Math.random() <= m_identity.getYield() ){
+
+        // double stepDoubt = Sigmoid.p_tinyStep;
+        // FIXME
+        double stepDoubt = 0.1;
+        if( isViable() ){ stepDoubt = -1.*stepDoubt; }
+        m_doubt.stepFromSigmoid(stepDoubt);
+
+        m_probaAcceptYield.setValue(m_doubt.getValue()*m_alternative.getYield() + (1-m_doubt.getValue())*m_identity.getYield());
+        m_probaAcceptEnv.setValue(m_doubt.getValue()*m_alternative.getEnv() + (1-m_doubt.getValue())*m_identity.getEnv());
+
+        if ( Math.random() <= m_probaAcceptYield.getValue() ){
             m_practice.increaseYield();
         }
-        if ( Math.random() <= m_identity.getEnv() ){
+        if ( Math.random() <= m_probaAcceptEnv.getValue() ){
             m_practice.increaseEnv();
         }
     }
-
-    /*
-    private int computeStrategy(final double probaQuestion, final double probaAcceptProd){
-
-        int strategy = m_strategy;
-
-        // Est-ce que tu vas adopter l'augmentation d'intensification?
-        double rand = Math.random();
-        double probaNeutral = 1 - Math.abs(1-2*probaAcceptProd);
-        if ( rand <= probaNeutral ){
-            strategy = 0;
-        }
-        else {
-            if ( rand  <= probaAcceptProd ){
-                strategy = 1;
-            }
-            else { 
-                strategy = -1;
-            }
-        }
-
-        if ( Math.random() <= m_probaQuestion ){
-            strategy = 0;
-        }
-
-        return strategy;
-    }
-    */
 
     public static class Identity{
         private Sigmoid m_yield;
@@ -141,6 +140,13 @@ public class Individual {
         public double getYield(){ return m_yield.getValue(); }
         public double getEnv(){ return m_env.getValue(); }
 
+        public void printHeaders(final FileWriter fw, final int id){
+            try{
+                fw.append("yieldId_"+id+"_"+",");
+                fw.append("envId_"+id+"_"+",");
+            }catch(IOException e){ e.printStackTrace(); }
+        }
+
         public void print(final FileWriter fw){
             m_yield.print(fw);
             m_env.print(fw);
@@ -163,7 +169,6 @@ public class Individual {
 
         Practice(final Practice pr){ this(pr.m_yield_lvl,pr.m_env_lvl); }
 
-        // l'idée ici est de lier env et yield. Plus env baisse, plus CoefYield baisse. Plus yield augmente, plus coefEnv baisse
         private void computeCoef(){
             // TODO direct sigmoid
         }
@@ -173,6 +178,15 @@ public class Individual {
 
         public double getYield(){ return (m_coef_yield.getValue()*m_yield_lvl); }
         public double getEnv(){ return (m_coef_env.getValue()*m_env_lvl); }
+        public int getYieldLevel(){ return m_yield_lvl; }
+        public int getEnvLevel(){ return m_env_lvl; }
+
+        public void printHeaders(final FileWriter fw, final int id){
+            try{
+                fw.append("yieldPractice_"+id+"_"+",");
+                fw.append("envPractice_"+id+"_"+",");
+            }catch(IOException e){ e.printStackTrace(); }
+        }
 
         public void print(final FileWriter fw){
             try{
@@ -186,15 +200,17 @@ public class Individual {
     public static class Accounts{
         private double m_income;
         private double m_costs;
-        private double m_profit;
-        private double m_last_profit;
+        // private Sigmoid m_coef_costs;
+        private double m_gain;
+        private double m_last_gain;
         private boolean m_isViable;
 
         Accounts(final double income, final double costs){
             m_income = income;
             m_costs = costs;
-            m_profit = income - costs;
-            m_last_profit = m_profit;
+            // m_coef_costs = new Sigmoid(Sigmoid.p_max);
+            m_gain = income - costs;
+            m_last_gain = m_gain;
             m_isViable = true;
         }
 
@@ -202,26 +218,42 @@ public class Individual {
             this(toClone.m_income,toClone.m_costs);
         }
 
-        public void updateAccounts( final Practice pr, final Economy eco ){
+        public void update( final Practice pr, final double price ){
             m_costs = computeCosts( pr );
-            m_income = computeIncome( pr, eco );
-            m_last_profit = m_profit;
-            m_profit = m_income - m_costs;
+            m_income = computeIncome( pr, price );
+            m_last_gain = m_gain;
+            m_gain = m_income - m_costs;
+            if( m_last_gain > m_gain ){ m_isViable = false; }
+            else { m_isViable = true; }
         }
 
         public double computeCosts( final Practice pr ){
-            // TODO
-            return m_costs;
+            // TODO faire une vrai fonction ici
+            // Sigmoid sig = new Sigmoid(0.5,0.,5000.,0.001);
+            // return pr.getYieldLevel()*(sig.getValue(pr.getYieldLevel())*3.+1.);
+            return 0.;
+
         }
 
-        public double computeIncome( final Practice pr, final Economy eco ){
-            // TODO
-            return m_income;
+        public double computeIncome( final Practice pr, final double price ){
+            return pr.getYield()*price;
         }
 
-        public double getProfit() { return m_profit; }
-        public double getLastProfit() { return m_last_profit; }
         public boolean isViable() { return m_isViable; }
+
+        public void printHeaders(final FileWriter fw, final int id){
+            try{
+                fw.append("gain_"+id+"_"+",");
+                fw.append("costs_"+id+"_"+",");
+            }catch(IOException e){ e.printStackTrace(); }
+        }
+
+        public void print(final FileWriter fw){
+            try{
+                fw.append(m_gain+",");
+                fw.append(m_costs+",");
+            }catch(IOException e){ e.printStackTrace(); }
+        }
 
     };
 
@@ -236,11 +268,18 @@ public class Individual {
 
         public void update(final double yield, final double env){
             m_yield.setValue(yield);
-            m_yield.setValue(env);
+            m_env.setValue(env);
         }
 
         public double getYield(){ return m_yield.getValue(); }
         public double getEnv(){ return m_env.getValue(); }
+
+        public void printHeaders(final FileWriter fw, final int id){
+            try{
+                fw.append("yieldAlt_"+id+"_"+",");
+                fw.append("envAlt_"+id+"_"+",");
+            }catch(IOException e){ e.printStackTrace(); }
+        }
 
         public void print(final FileWriter fw){
             m_yield.print(fw);

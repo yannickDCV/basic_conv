@@ -41,7 +41,9 @@ while (( "$#" )); do
             #~ Liste les données disponibles
             #-----------------------------------------------------------------------
             echo -e "\nListe des données disponibles :" 
-            echo "$(head -n 1 $default_dataFile | sed 's/,/\n/g' | sort -u)" 
+            echo "$(head -n 1 $default_dataFile | sed 's/,/\n/g' | sed -E 's/_[0-9]+_//g' | sort -u)" 
+            echo
+            echo "$(head -n 1 $default_dataFile | sed 's/[a-zA-Z]//g' | sed -E 's/(^.[0-9]+).*,.([0-9]+.),*$/\1-\2/g')" 
             echo
             exit 0
             ;;

@@ -38,7 +38,7 @@ public class Population {
         m_influences = new Influences(popSize, 0.1);
 
         Individual.Practice practice = new Individual.Practice(0, 0);
-        Individual.Accounts accounts = new Individual.Accounts(100., 100.);
+        Individual.Accounts accounts = new Individual.Accounts(100., 0.);
 
         for(int i=0; i<m_individuals.length; i++){
             double yieldIdStart = Math.random()*0.1 + 0.45;
@@ -52,28 +52,25 @@ public class Population {
     }
 
     public void printHeaders(final FileWriter fw){
-        try{
-            for(int i=0; i<m_individuals.length; i++){
-                fw.append("yieldId_"+i+"_"+",");
-                fw.append("envId_"+i+"_"+",");
-                fw.append("yieldPractice_"+i+"_"+",");
-                fw.append("envPractice_"+i+"_"+",");
-            }
-            m_influences.printHeaders(fw);
-        }catch(IOException e){ e.printStackTrace(); }
+        for(int i=0; i<m_individuals.length; i++){
+            m_individuals[i].printHeaders(fw);
+        }
+        m_influences.printHeaders(fw);
     }
 
     public void print(final FileWriter fw){
         for(int i=0; i<m_individuals.length; i++){
-             m_individuals[i].print(fw);
+            m_individuals[i].print(fw);
         }
         m_influences.print(fw);
     }
 
     public void iter(final double price) {
-        updatePractices();
-        updateIdentities();
         updateInfluences();
+        updateIdentities();
+        updateAlternatives();
+        updatePractices();
+        updateAccounts(price);
     }
 
     private void updatePractices(){
@@ -82,59 +79,12 @@ public class Population {
         }
     }
 
-/*/*
-    // l'identité s'actualise avec la proportion env/yield chez les autres
-    // Somme pondérée par l'influence
-    private void updateIdentities(){
+    private void updateAccounts(final double price){
         for(int i=0; i<m_individuals.length; i++){
-            double sumWeights = 0.;
-            double envIdRef = 0.;
-            double yieldIdRef = 0.;
-            // TODO bien caler coef sigmoide car idRef < 1
-            for(int j=0; j<m_individuals.length; j++){
-                double envOther = m_individuals[j].getPractice().getEnv();
-                double yieldOther = m_individuals[j].getPractice().getYield();
-
-                if( envOther+yieldOther == 0. ){ break; }
-
-                double propEnv = envOther/(envOther+yieldOther);
-                double propYield = envOther/(envOther+yieldOther);
-                double influence = m_influences.getInf(i,j);
-
-                envIdRef += influence*propEnv;
-                yieldIdRef += influence*propYield;
-                sumWeights += influence;
-            }
-        envIdRef = envIdRef/sumWeights;
-        yieldIdRef = yieldIdRef/sumWeights;
-        m_individuals[i].updateIdentity(yieldIdRef, envIdRef);
+            m_individuals[i].updateAccounts(price);
         }
     }
 
-    // Plus un agent est fort par rapport à moi sur les choses qui me sont importantes, plus je suis influencé par lui
-    private void updateInfluences(){
-        Sigmoid sig = new Sigmoid();
-        for(int i=0; i<m_individuals.length; i++){
-            for(int j=0; j<m_individuals.length; j++){
-
-                double yieldId = m_individuals[i].getIdentity().getYield();
-                double envId = m_individuals[i].getIdentity().getEnv();
-                double yieldPr = m_individuals[i].getPractice().getYield();
-                double envPr = m_individuals[i].getPractice().getEnv();
-                double yieldPrOt = m_individuals[j].getPractice().getYield();
-                double envPrOt = m_individuals[j].getPractice().getEnv();
-                double sigDiffYield = sig.getValue(yieldPrOt-yieldPr);
-                double sigDiffEnv = sig.getValue(envPrOt-envPr);
-
-                double inf = Math.max(yieldId*sigDiffYield, envId*sigDiffEnv);
-
-                m_influences.setInf(i,j,inf);
-            }
-        }
-    }
-    // */
-
-/**/
     private void updateIdentities(){
         // l'identité s'actualise avec le positionnement par rapport aux autres sur le résultat obtenu.
         // Somme pondérée par l'influence
@@ -155,8 +105,20 @@ public class Population {
         }
     }
 
-    private void updateAlternative(){
-        // l'alternative est obtenue en faisant la moyenne des proportions de pr.env et pr.yield des individus viables
+    private void updateInfluences(){
+        // Plus un agent met de l'importance sur les mêmes choses que moi, plus je suis influencé par lui (?!?)
+        for(int i=0; i<m_individuals.length; i++){
+            for(int j=0; j<m_individuals.length; j++){
+                if (i != j){ 
+                    double distId = m_individuals[i].distId(m_individuals[j]);
+                    m_influences.setInf(i,j,distId);
+                }
+            }
+        }
+    }
+
+    // l'alternative est obtenue en faisant la moyenne des proportions de pr.env et pr.yield des individus viables
+    private void updateAlternatives(){
         for(int i=0; i<m_individuals.length; i++){
             double sumWeights = 0.;
             double sumRef = 0.;
@@ -184,19 +146,6 @@ public class Population {
 
         }
     }
-
-    private void updateInfluences(){
-        // Plus un agent met de l'importance sur les mêmes choses que moi, plus je suis influencé par lui (?!?)
-        for(int i=0; i<m_individuals.length; i++){
-            for(int j=0; j<m_individuals.length; j++){
-                if (i != j){ 
-                    double distId = m_individuals[i].distId(m_individuals[j]);
-                    m_influences.setInf(i,j,distId);
-                }
-            }
-        }
-    }
-    // */
 
 };
 

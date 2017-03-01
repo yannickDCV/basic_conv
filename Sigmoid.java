@@ -25,8 +25,8 @@ import java.io.*;
 public final class Sigmoid {
 
     static final double p_tinyStep = 0.0001;
-    static final double p_min = p_tinyStep;
-    static final double p_max = 1.-p_tinyStep;
+    static final double p_min = 0.00001;
+    static final double p_max = 0.99999;
 
     private double m_x;
     private double m_coef_steep;
@@ -47,12 +47,12 @@ public final class Sigmoid {
         m_coef_offset=0.;
     } 
 
-    public Sigmoid (final double xStart, final double yMax, final double yMin, final double precision){
+    public Sigmoid (final double xStart, final double xForYMax, final double xForYMin, final double precision){
 
         errorRangeX(xStart, "sigmoid");
 
         m_x=xStart;
-        setCoef(yMax,yMin,precision);
+        setCoef(xForYMax,xForYMin,precision);
     }
 
     public void stepFromSigmoid( final double step ){
@@ -71,12 +71,12 @@ public final class Sigmoid {
     }
 
     // Les coefficients de 1/( 1 + exp(steep*x+offset))
-    private void setCoef( final double yMax, final double yMin, final double precision){
+    private void setCoef( final double xForYMax, final double xForYMin, final double precision){
 
         if ( precision >= 1. || precision <= 0. ) { throw new RuntimeException("pb in Sigmoid.setCoef() on precision"); };
 
-        m_coef_steep = (1./(yMax-yMin))*Math.log((1-precision)*(1-precision)/(precision*precision));
-        m_coef_offset = -m_coef_steep*yMin - Math.log( (1./precision)-1);
+        m_coef_steep = (1./(xForYMax-xForYMin))*Math.log((1-precision)*(1-precision)/(precision*precision));
+        m_coef_offset = -m_coef_steep*xForYMin - Math.log( (1./precision)-1);
     }
 
     public void print(final FileWriter fw){
