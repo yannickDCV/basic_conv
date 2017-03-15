@@ -31,24 +31,15 @@ public class Model {
     private Economy m_economy;
 
     public Model(final int popSize) {
-
-        // Individual.Identity identity = new Individual.Identity(p_yieldStart, p_envStart);
-        // Individual.Practice practice = new Individual.Practice(p_yieldStart, p_envStart);
-        // Individual indToClone = new Individual(identity, practice);
-
+        // TODO m_config = new Configuration(configFile)
         m_population = new Population(popSize);
         m_economy = new Economy(m_filePrice);
-
-
-        // Configuration config = new Configuration();
-        // Population m_population = new Population(popSize, config, indToClone);
-        // Economy m_economy = new Economy();
-
     }
 
     public void iter() {
-        m_economy.iter();
-        m_population.iter(m_economy.getPrice());
+         m_economy.iter();
+         m_population.iter(m_economy.getPrice());
+        // m_population.iter(10.);
     }
 
     public void initPrint(final FileWriter fw){
@@ -80,14 +71,14 @@ public class Model {
             model.initPrint(fw);
 
             for (int i = 0; i < nbStep; i++) {
-                System.out.println("Iteration " + i);
+                System.err.println("Iteration " + i);
                 model.iter();
                 model.print(fw);
             }
 
             fw.close();
-            System.out.println( "nbStep = " + nbStep ); 
-            System.out.println( "popSize = " + popSize ); 
+            System.err.println( "nbStep = " + nbStep ); 
+            System.err.println( "popSize = " + popSize ); 
         }catch(IOException e){ e.printStackTrace(); }
     }
 

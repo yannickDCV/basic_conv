@@ -59,10 +59,23 @@ public class Identity{
 
     public double getProbaIncreaseYield(){ return m_importanceYield.getValue(); }
     public double getProbaIncreaseEnv(){ return m_importanceEnv.getValue(); }
+    public int getRefMaxYield(){ return m_maxYieldEverSeen; }
+    public int getRefMaxEnv(){ return m_maxEnvEverSeen; }
 
     public IdealPractice getIdealPractice(){
         m_idPractice.update(m_maxYieldEverSeen, m_maxEnvEverSeen, m_importanceYield.getValue(), m_importanceEnv.getValue());
         return m_idPractice;
+    }
+
+    public double getDistFrom( final Identity id ){
+        return getIdealPractice().getDistFrom( id.getIdealPractice(), m_maxYieldEverSeen, m_maxEnvEverSeen );
+        // double distYield = Math.abs(m_importanceYield.getValue()-id.m_importanceYield.getValue());
+        // double distEnv = Math.abs(m_importanceEnv.getValue()-id.m_importanceEnv.getValue());
+        // return 0.5*(distYield + distEnv);
+    }
+
+    public double getDistFrom( final AbstractPractice ap ){
+        return m_idPractice.getDistFrom( ap, m_maxYieldEverSeen, m_maxEnvEverSeen );
     }
 
     public void printHeaders(final FileWriter fw, final int id){

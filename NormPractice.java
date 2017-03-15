@@ -26,11 +26,15 @@ import java.util.Random;
 
 public class NormPractice extends AbstractPractice{
 
+    // FIXME pas classe
+    private final double p_coef_update = 10.;
+
     NormPractice( final int yield, final int env ){ super(yield,env); }
     NormPractice(final AbstractPractice ap){ super(ap); }
 
-    // TODO
-    public void update(final Influences inf){
+    public void update(final RealPractice rp){
+            m_yield_lvl = (int) Math.ceil( (rp.m_yield_lvl+p_coef_update*m_yield_lvl)/(p_coef_update+1.) );
+            m_env_lvl = (int) Math.ceil( (rp.m_env_lvl+p_coef_update*m_env_lvl)/(p_coef_update+1.) );
     }
 
     public void printHeaders(final FileWriter fw, final int id){

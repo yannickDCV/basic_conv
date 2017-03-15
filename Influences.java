@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Irstea
+ * Copyright (C) 2017 Irstea
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,100 +18,147 @@ package model.basic_conv;
 
 import java.util.*;
 import java.io.*;
-
+import java.util.Random;
 /**
  *
  * @author
  */
 
+// TODO? Mettre une sigmoid pour chaque inf de m_influences
 public class Influences {
 
-    // FIXME Moyen de faire mieux que ça
-    private final double p_threshold=0.5;
+    // FIXME pas classe
+    private final double p_threshold = 0.5;
+    private final double p_distIdForMaxInfluence = 0.;
+    private final double p_distIdForMinInfluence = 1.;
+    private final int p_nbSteps = 50;
 
-    private int m_popSize;
-    private ConnectivityMatrix m_influences;
+    private final ArrayList<Double> m_influences;
+    private Sigmoid m_influence;
+    private int m_id;
 
-    public Influences(final int popSize, final double infStart) {
+    Influences( final int myId, final int nbInfluences, final double valueStart ){
 
-        m_popSize = popSize;
-        m_influences = new ConnectivityMatrix(popSize, infStart);
+        if ( valueStart < 0. ) { throw new RuntimeException("In Influence: value can't be inferior than 0"); }
+        if ( valueStart > 1. ) { throw new RuntimeException("In Influence: value can't be superior than 1"); }
+        if ( myId >= nbInfluences  ) { throw new RuntimeException("In Influence: myId can't be superior or equal than popSize"); }
+        if ( myId < 0 ) { throw new RuntimeException("In Influence: myId can't be inferior than 0"); }
+
+        m_influences = new ArrayList<Double>();
+        for(int i=0; i<nbInfluences; i++){
+            m_influences.add(valueStart);
+        }
+        m_influences.set(myId,0.);
+        m_id = myId;
+        m_influence = new Sigmoid(0.1, p_distIdForMaxInfluence, p_distIdForMinInfluence, 0.1, p_nbSteps);
     }
 
-    public void printHeaders(final FileWriter fw){
-        try{
-            for(int i=0; i<m_popSize; i++){
-                fw.append("influence_"+i+"_"+",");
-                fw.append("nbInfluence_"+i+"_"+",");
+    Influences( final Influences toClone ){
+        m_influences = new ArrayList<Double>(toClone.m_influences);
+        m_influence = new Sigmoid(toClone.m_influence);
+        m_id = toClone.m_id;
+    }
+
+    public void set( final int id, final double distId){
+
+        if ( id >= m_influences.size() ) { throw new RuntimeException("In Influence: myId can't be superior or equal than popSize"); }
+        if ( id < 0 ) { throw new RuntimeException("In Influence: myId can't be inferior than 0"); }
+        if ( id == m_id ) { throw new RuntimeException("In Influence: attempt to set influence from myself"); }
+        if ( distId < 0. ) { throw new RuntimeException("In Influence: distId can't be inferior than 0"); }
+        if ( distId > 1. ) { throw new RuntimeException("In Influence: distId can't be superior than 1"); }
+
+        m_influences.set(id,m_influence.getFromDirectSigmoid(distId));
+    }
+
+    public double get( final int id ){
+        if ( id >= m_influences.size() ) { throw new RuntimeException("In Influence: myId can't be superior or equal than popSize"); }
+        if ( id < 0 ) { throw new RuntimeException("In Influence: myId can't be inferior than 0"); }
+        return m_influences.get(id); 
+    }
+
+    public void stepDownForAll(){
+         for(int i=0; i<m_influences.size(); i++){
+             double inf = m_influences.get(i);
+             m_influences.set(i,inf+m_influence.getStepFromDirectSigmoid(inf,1.));
+         }
+    }
+
+    public int[] getSomePeople(final int nbPeople){
+        if ( nbPeople >= m_influences.size() ) { throw new RuntimeException("In Influence: nbPeople superior or equal than popSize"); }
+        int[] people = new int[nbPeople];
+
+        ArrayList<Double> probaArray = new ArrayList<Double>(m_influences);
+
+        System.out.println( "m_influences = " + m_influences ); 
+        System.out.println( "nbPeople = " + nbPeople ); 
+        System.out.println( "m_id = " + m_id ); 
+        for(int i=0; i<nbPeople; i++){
+            double sum = getSumInf(probaArray);
+            double sumProba = 0.;
+            double rand = Math.random();
+            boolean isSet = false;
+            for(int j=0; j<probaArray.size(); j++){
+                // calcul proba selon influence
+                probaArray.set(j,probaArray.get(j)/sum);
+                sumProba += probaArray.get(j);
+                if( !isSet && rand <= sumProba ){
+                    people[i]=j;
+                    System.out.println( "people["+i+"] = " + people[i] ); 
+                    probaArray.set(j,0.);
+                    isSet = true;
+                }
+                else{ probaArray.set(j,probaArray.get(j)*sum);}
             }
+        }
+
+        return people;
+    }
+
+    public void setOpening ( final double needForChange ){
+        if ( needForChange < 0. ) { throw new RuntimeException("In Influence: needForChange can't be inferior than 0"); }
+        if ( needForChange > 1. ) { throw new RuntimeException("In Influence: needForChange can't be superior than 1"); }
+
+        double opening = needForChange*0.5;
+        m_influence.setCoef(p_distIdForMaxInfluence,p_distIdForMinInfluence,opening);
+    }
+
+    private int getNbInfUpThan( final double threshold ){
+        if ( threshold < 0. ) { throw new RuntimeException("In Influence: threshold can't be inferior than 0"); }
+        if ( threshold > 1. ) { throw new RuntimeException("In Influence: threshold can't be superior than 1"); }
+
+        int sum=0;
+        for(int i=0; i<m_influences.size(); i++){
+            if ( m_influences.get(i) >= threshold ){ sum++; }
+        }
+        return sum;
+    }
+
+    private double getSumInf(final ArrayList<Double> infs){
+        if ( infs.size() == 0) { throw new RuntimeException("In Influence: nb inf = 0... Impossible to compute mean"); }
+        double sum=0.;
+        for(int i=0; i<infs.size(); i++){
+            sum += infs.get(i);
+        }
+        return sum;
+    }
+
+    private double getMeanInf(){
+        return getSumInf(m_influences)/m_influences.size();
+    }
+
+    public void printHeaders(final FileWriter fw, final int id){
+        try{
+            fw.append("nbInf_"+id+"_"+",");
+            fw.append("moyInf_"+id+"_"+",");
         }catch(IOException e){ e.printStackTrace(); }
     }
 
     public void print(final FileWriter fw){
         try{
-            for(int i=0; i<m_popSize; i++){
-                fw.append(m_influences.getMeanWeight(i)+",");
-                fw.append(m_influences.getNbWeightSupThan(i,p_threshold)+",");
-            }
+            fw.append(getNbInfUpThan(p_threshold) + ",");
+            fw.append(getMeanInf() + ",");
         }catch(IOException e){ e.printStackTrace(); }
     }
 
-        public void setInf( final int i, final int j, final double inf ){
-            m_influences.setWeight(i,j,inf);
-        }
-
-        public double getInf( final int i, final int j){
-            return m_influences.getWeight(i,j);
-        }
-
-
-    private class ConnectivityMatrix{
-
-        private double[][] m_weights;
-        private int m_size;
-
-        ConnectivityMatrix(final int size, final double weightStart){
-            if ( weightStart < 0. ) { throw new RuntimeException("weight in connectivity matrix can't be inferior or equal to 0"); };
-            if ( weightStart > 1. ) { throw new RuntimeException("weight in connectivity matrix can't be superior or equal to 1"); };
-            m_size = size;
-            m_weights = new double[size][size];
-            for(int i=0; i<size; i++){
-                for(int j=0; j<size; j++){
-                    m_weights[i][j] = weightStart;
-                }
-            }
-        }
-
-        public void setWeight( final int i, final int j, final double weight ){
-            m_weights[i][j] = weight;
-        }
-
-        public double getWeight( final int i, final int j){
-            return m_weights[i][j];
-        }
-
-        public double getMeanWeight( final int i ){
-            double sum=0;
-            if(m_size == 1){return 0.;};
-            for(int j=0; j<m_size; j++){
-                if( i!=j ){ sum += m_weights[i][j]; }
-            }
-            return sum/(m_size-1.);
-        }
-
-        public int getNbWeightSupThan( final int i, final double threshold ){
-            if ( threshold < 0. ) { throw new RuntimeException("weight in connectivity matrix can't be inferior or equal to 0"); };
-            if ( threshold > 1. ) { throw new RuntimeException("weight in connectivity matrix can't be superior or equal to 1"); };
-
-            int sum=0;
-            for(int j=0; j<m_size; j++){
-                if( m_weights[i][j] >= threshold && i!=j ){ sum++; }
-            }
-            return sum;
-        }
-
-    };
-
 };
-
 

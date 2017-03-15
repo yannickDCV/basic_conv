@@ -24,81 +24,121 @@ import java.io.*;
  */
 public final class Sigmoid {
 
-    static final double p_tinyStep = 0.0001;
-    static final double p_min = 0.00001;
-    static final double p_max = 0.99999;
+    final static public double p_default_yStart = 0.5;
+    final static public int p_default_xForYEqualMax = 8000;
+    final static public int p_default_xForYEqualMin = -8000;
+    final static public double p_default_sigma = 0.005;
+    final static public int p_default_nbSteps = 1000;
 
-    private double m_x;
+    private double m_y;
     private double m_coef_steep;
     private double m_coef_offset;
 
-    public Sigmoid (){
-        m_x=0.5;
-        m_coef_steep=1.;
-        m_coef_offset=0.;
+    private double m_step;
+    private double m_maxY, m_minY;
+
+    public Sigmoid (){ 
+        this( 
+                p_default_yStart, 
+                p_default_xForYEqualMax, 
+                p_default_xForYEqualMin, 
+                p_default_sigma, 
+                p_default_nbSteps
+            ); 
     } 
 
-    public Sigmoid (final double xStart){
-
-        errorRangeX(xStart, "sigmoid");
-
-        m_x=xStart;
-        m_coef_steep=1.;
-        m_coef_offset=0.;
+    public Sigmoid (final double yStart){ 
+        this( 
+                yStart, 
+                p_default_xForYEqualMax, 
+                p_default_xForYEqualMin, 
+                p_default_sigma, 
+                p_default_nbSteps
+            ); 
     } 
 
-    public Sigmoid (final double xStart, final double xForYMax, final double xForYMin, final double precision){
+    public Sigmoid (final Sigmoid toClone){
+        m_y = toClone.m_y;
+        m_coef_steep = toClone.m_coef_steep;
+        m_coef_offset = toClone.m_coef_offset;
+        m_step = toClone.m_step;
+        m_minY = toClone.m_minY;
+        m_maxY = toClone.m_maxY;
+    } 
 
-        errorRangeX(xStart, "sigmoid");
+    public Sigmoid (final double yStart, final double xForYEqualMax, final double xForYEqualMin, final double sigma, final int nbStep){
 
-        m_x=xStart;
-        setCoef(xForYMax,xForYMin,precision);
+        errorRangeY(yStart, "sigmoid");
+        if ( nbStep <= 0 ) { throw new RuntimeException("pb in sigmoid with nbStep"); };
+
+        m_y = yStart;
+        setCoef(xForYEqualMax,xForYEqualMin,sigma);
+        setNumericalParameters(xForYEqualMax,xForYEqualMin,nbStep);
     }
 
-    public void stepFromSigmoid( final double step ){
+    public void stepFromSigmoid( final double coef ){
 
-        m_x = m_x + (1./(1.+Math.exp(-(logit(m_x)+step))))-(1./(1.+Math.exp(-logit(m_x))));
+        m_y = getFromDirectSigmoid(logit(m_y)+coef*m_step);
 
-        if (m_x<p_min){ m_x=p_min; }
-        if (m_x>p_max){ m_x=p_max; }
-    };
+        if (m_y<m_minY){ m_y=m_minY; }
+        if (m_y>m_maxY){ m_y=m_maxY; }
+    }
 
-    public double logit(double x){
+    public void stepUp(){ stepFromSigmoid(1.); }
+    public void stepDown(){ stepFromSigmoid(-1.); }
 
-        errorRangeX(x, "logit");
+    public double logit(double y){
 
-        return Math.log(x/(1-x));
+        errorRangeY(y, "logit");
+        if ( m_coef_steep == 0. ) { throw new RuntimeException("pb in logit with steep coef"); };
+
+        return (1./m_coef_steep)*Math.log(y/(1-y))-(m_coef_offset/m_coef_steep);
     }
 
     // Les coefficients de 1/( 1 + exp(steep*x+offset))
-    private void setCoef( final double xForYMax, final double xForYMin, final double precision){
+    public void setCoef( final double xForYEqualMax, final double xForYEqualMin, final double sigma){
 
-        if ( precision >= 1. || precision <= 0. ) { throw new RuntimeException("pb in Sigmoid.setCoef() on precision"); };
+        if ( sigma >= 1. || sigma <= 0. ) { throw new RuntimeException("pb in Sigmoid.setCoef() on sigma"); };
 
-        m_coef_steep = (1./(xForYMax-xForYMin))*Math.log((1-precision)*(1-precision)/(precision*precision));
-        m_coef_offset = -m_coef_steep*xForYMin - Math.log( (1./precision)-1);
+        m_coef_steep = (1./(xForYEqualMax-xForYEqualMin))*Math.log((1-sigma)*(1-sigma)/(sigma*sigma));
+        m_coef_offset = -m_coef_steep*xForYEqualMin - Math.log( (1./sigma)-1);
+    }
+
+    private void setNumericalParameters( final double xForYEqualMax, final double xForYEqualMin, final int nbStep){
+        // FIXME si parametres pas initialisés
+        m_step = Math.abs(xForYEqualMax-xForYEqualMin)/nbStep;
+        m_maxY = getFromDirectSigmoid(xForYEqualMax);
+        m_minY = getFromDirectSigmoid(xForYEqualMin);
     }
 
     public void print(final FileWriter fw){
         try{
-            fw.append(m_x+ ",");
+            fw.append(m_y+ ",");
         }catch(IOException e){ e.printStackTrace(); }
     }
 
-    public void setValue(final double x){ 
-        errorRangeX(x,"sigmoid");
-        m_x = x; 
+    public void setValue(final double y){ 
+        errorRangeY(y,"sigmoid");
+        m_y = y; 
     }
 
-    public double getValue(){ return m_x; }
+    public double getValue(){ return m_y; }
 
-    public double getValue(final double x){ 
+    public double getFromDirectSigmoid(final double x){ 
         return (1. / (1. + Math.exp(-( m_coef_steep*x + m_coef_offset )))); 
     }
 
-    private void errorRangeX( final double x, final String s ){
-        if ( x <= 0. ) { throw new RuntimeException("In "+s+": x can't be inferior or equal to 0"); };
-        if ( x >= 1. ) { throw new RuntimeException("In "+s+": x can't be superior or equal to 1"); };
+    public double getStepFromDirectSigmoid( final double y, final double coef ){
+        if ( y == 0. || y == 1. ) { return 0.; };
+        errorRangeY(y, "getStepFromDirectSigmoid");
+
+        double tmp = getFromDirectSigmoid(logit(y)+coef*m_step)-y;
+        return tmp;
+    }
+
+    private void errorRangeY( final double y, final String s ){
+        if ( y <= 0. ) { throw new RuntimeException("In "+s+": y can't be inferior or equal to 0"); };
+        if ( y >= 1. ) { throw new RuntimeException("In "+s+": y can't be superior or equal to 1"); };
     }
 
 };

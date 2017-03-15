@@ -43,7 +43,7 @@ while (( "$#" )); do
             echo -e "\nListe des données disponibles :" 
             echo "$(head -n 1 $default_dataFile | sed 's/,/\n/g' | sed -E 's/_[0-9]+_//g' | sort -u)" 
             echo
-            echo "$(head -n 1 $default_dataFile | sed 's/[a-zA-Z]//g' | sed -E 's/(^.[0-9]+).*,.([0-9]+.),*$/\1-\2/g')" 
+            echo "$(head -n 1 $default_dataFile | sed 's/[a-zA-Z,]//g' | sed -E 's/_+/_/g' | sed -E 's/(^_[0-9]+).*([0-9]+_$)/\1-\2/g')" 
             echo
             exit 0
             ;;
@@ -112,13 +112,13 @@ echo " "
 
 # Lancement du modéle
 if [[ $run != false ]]; then
-    javac Model.java Population.java Individual.java Sigmoid.java Influences.java Economy.java
+    javac Model.java Population.java Individual.java Sigmoid.java Influences.java AbstractPractice.java IdealPractice.java NormPractice.java RealPractice.java Economy.java Identity.java AlternativePractice.java
     if [[ $? != 0 ]]; then
         exit 0
     fi
 
-    # ( cd ../.. && java model.basic_conv.Model $iter $pop 2> model/basic_conv/aef.dat )
-    ( cd ../.. && java model.basic_conv.Model $iter $pop )
+    ( cd ../.. && java model.basic_conv.Model $iter $pop > model/basic_conv/aef.dat )
+    #( cd ../.. && java model.basic_conv.Model $iter $pop )
 
 fi
 
