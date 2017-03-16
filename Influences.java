@@ -24,7 +24,8 @@ import java.util.Random;
  * @author
  */
 
-// TODO? Mettre une sigmoid pour chaque inf de m_influences
+// TODO Mettre une sigmoid pour chaque inf de m_influences?
+// TODO Inner classe influence?
 public class Influences {
 
     // FIXME pas classe
@@ -90,8 +91,8 @@ public class Influences {
         ArrayList<Double> probaArray = new ArrayList<Double>(m_influences);
 
         System.out.println( "m_influences = " + m_influences ); 
-        System.out.println( "nbPeople = " + nbPeople ); 
         System.out.println( "m_id = " + m_id ); 
+
         for(int i=0; i<nbPeople; i++){
             double sum = getSumInf(probaArray);
             double sumProba = 0.;
@@ -114,6 +115,7 @@ public class Influences {
         return people;
     }
 
+    // FIXME l'opening n'a pas l'effet voulu : Si on rencontre, alors on le met à 0.5... Mais on rencontre pas car faible inf
     public void setOpening ( final double needForChange ){
         if ( needForChange < 0. ) { throw new RuntimeException("In Influence: needForChange can't be inferior than 0"); }
         if ( needForChange > 1. ) { throw new RuntimeException("In Influence: needForChange can't be superior than 1"); }

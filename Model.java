@@ -72,6 +72,7 @@ public class Model {
 
             for (int i = 0; i < nbStep; i++) {
                 System.err.println("Iteration " + i);
+                System.out.println("Iteration " + i);
                 model.iter();
                 model.print(fw);
             }

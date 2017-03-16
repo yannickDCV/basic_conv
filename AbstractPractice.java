@@ -44,7 +44,6 @@ public abstract class AbstractPractice{
         m_env_lvl = toCopy.m_env_lvl; 
     }
 
-    // TODO ref avec sigmoid
     public double getDistFrom(final AbstractPractice ap, final int refYield, final int refEnv){
         if( refYield <=0 ) { throw new RuntimeException("In Practice : refYield can't be inferior or equal to 0"); }
         if( refEnv <=0 ) { throw new RuntimeException("In Practice : refEnv can't be inferior or equal to 0"); }

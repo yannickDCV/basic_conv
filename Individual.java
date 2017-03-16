@@ -78,6 +78,7 @@ public class Individual {
     public int[] getPeopleToDiscussWith(final int popSize){
         // FIXME a verif
         final int nbPeople = (int) Math.ceil(m_needForChange.getValue()*(popSize-1));
+        m_influences.setOpening(m_needForChange.getValue());
         return m_influences.getSomePeople(nbPeople);
     }
 
@@ -88,22 +89,28 @@ public class Individual {
         // FIXME a verif
         m_influences.set(ind.m_id,m_identity.getDistFrom(ind.m_identity));
         m_norm.update(ind.m_practice);
+        if( m_alternative.isInquiring()) { m_alternative.update(ind.m_practice, ind.m_viability.getValue()); }
     }
 
     public void iter( final double price ){
 
-        double satisfaction = getSatisfaction( m_practice, m_identity, m_norm, m_viability );
-
-        m_practice.update(m_identity,satisfaction-m_lastSatisfaction);
-        // TODO m_accounts.update pour viability
+        m_practice.update(m_identity);
+        // TODO m_accounts.update pour viability pour prendre en compte seuil de viabilité
         updateViability(price,m_practice);
 
+        double satisfaction = getSatisfaction( m_practice, m_identity, m_norm, m_viability );
+
+        m_identity.update(m_practice, satisfaction-m_lastSatisfaction);
         updateNeedForChange(satisfaction);
 
-        //if( Math.random() <= m_needForChange.getValue() ) {
-         ////m_alternative.setSearchMode(true);
-         //if( m_alternative.isMajorChangeTriggered( m_identity, m_norm ) ){ m_practice.set(m_alternative); }
-        //}
+        if( Math.random() <= m_needForChange.getValue() ) {
+            m_alternative.setInquiringMode(true);
+            if( m_alternative.isMajorChangeTriggered( m_needForChange.getValue(), m_identity, m_norm ) ){ 
+                m_practice.copy(m_alternative); 
+                m_alternative.reset();
+                m_needForChange.setValueEqualMin();
+            }
+        }
         m_lastSatisfaction = satisfaction;
         m_influences.stepDownForAll();
 
@@ -113,21 +120,26 @@ public class Individual {
 
         // TODO verif comportement attitude
         double attitude = 1.-id.getDistFrom(pr);
-        System.err.println( "attitude = " + attitude ); 
         double subjectiveNorm = 1.-norm.getDistFrom(pr,id.getRefMaxYield(),id.getRefMaxEnv());
-        System.err.println( "subjectiveNorm = " + subjectiveNorm ); 
         double pcb = m_viability.getValue();
-        System.err.println( "pcb = " + pcb ); 
+
+        System.out.println("--------------------------------------------"); 
+        System.out.println( "m_id = " + m_id ); 
+        System.out.println( "attitude = " + attitude ); 
+        System.out.println( "subjectiveNorm = " + subjectiveNorm ); 
+        System.out.println( "pcb = " + pcb ); 
 
         // TODO dans longtemps : voir dynamique a,b,c
-        double satisfaction = (1./3.) * ( attitude + subjectiveNorm + pcb ) ;
+        // FIXME pour test 2*pcb
+        double satisfaction = (1./4.) * ( attitude + subjectiveNorm + 2*pcb ) ;
+        System.out.println( "satisfaction = " + satisfaction ); 
 
         return satisfaction;
     }
 
     private void updateViability( final double price, final RealPractice pr){
-        // TODO
-        // price = correctPriceFromEnv(price, m_practice);
+        // TODO price = correctPriceFromEnv(price, m_practice);
+        // FIXME pb si prix en marche d'escalier
         double gain = price*pr.getYield();
         m_viability.stepFromSigmoid(Math.signum(gain-m_lastGain));
         m_lastGain = gain;

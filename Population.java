@@ -54,7 +54,12 @@ public class Population {
         }
 
           for(int i=0; i<m_individuals.length; i++){
-              m_individuals[i].iter(price);
+              if (i==0){
+                  m_individuals[i].iter(12.);
+              }
+              else{
+                  m_individuals[i].iter(price);
+              }
           }
 
     }

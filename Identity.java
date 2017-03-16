@@ -46,6 +46,19 @@ public class Identity{
         this(ap, ap.getYield(), ap.getEnv(), ap.getPercentageYield(), ap.getPercentageEnv());
     }
 
+    public void update( final RealPractice rp, final double diffSatisfaction ){ 
+        if( diffSatisfaction > 0. ){
+           addStepYield(rp.getStratYield()); 
+           addStepEnv(rp.getStratEnv()); 
+        }
+        // TODO a ref metropolis. proba redescendre
+        else{
+           addStepYield(-1*rp.getStratYield()); 
+           addStepEnv(-1*rp.getStratEnv()); 
+        }
+        m_idPractice.update(m_maxYieldEverSeen, m_maxEnvEverSeen, m_importanceYield.getValue(), m_importanceEnv.getValue());
+    }
+
     public void setMaxYieldIfBigger( final int yield ){
         if( m_maxYieldEverSeen < yield){ m_maxYieldEverSeen = yield; }
     }
@@ -63,7 +76,6 @@ public class Identity{
     public int getRefMaxEnv(){ return m_maxEnvEverSeen; }
 
     public IdealPractice getIdealPractice(){
-        m_idPractice.update(m_maxYieldEverSeen, m_maxEnvEverSeen, m_importanceYield.getValue(), m_importanceEnv.getValue());
         return m_idPractice;
     }
 

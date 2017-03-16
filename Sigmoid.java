@@ -30,6 +30,9 @@ public final class Sigmoid {
     final static public double p_default_sigma = 0.005;
     final static public int p_default_nbSteps = 1000;
 
+    final private double p_limit_min = 0.000001;
+    final private double p_limit_max = 0.999999;
+
     private double m_y;
     private double m_coef_steep;
     private double m_coef_offset;
@@ -86,6 +89,8 @@ public final class Sigmoid {
 
     public void stepUp(){ stepFromSigmoid(1.); }
     public void stepDown(){ stepFromSigmoid(-1.); }
+    public void setValueEqualMin(){ m_y=m_minY; }
+    public void setValueEqualMax(){ m_y=m_maxY; }
 
     public double logit(double y){
 
@@ -125,15 +130,16 @@ public final class Sigmoid {
     public double getValue(){ return m_y; }
 
     public double getFromDirectSigmoid(final double x){ 
-        return (1. / (1. + Math.exp(-( m_coef_steep*x + m_coef_offset )))); 
+        double res =(1. / (1. + Math.exp(-( m_coef_steep*x + m_coef_offset )))); 
+        if (res<p_limit_min){ res=p_limit_min; }
+        if (res>p_limit_max){ res=p_limit_max; }
+        return res;
     }
 
     public double getStepFromDirectSigmoid( final double y, final double coef ){
         if ( y == 0. || y == 1. ) { return 0.; };
         errorRangeY(y, "getStepFromDirectSigmoid");
-
-        double tmp = getFromDirectSigmoid(logit(y)+coef*m_step)-y;
-        return tmp;
+        return getFromDirectSigmoid(logit(y)+coef*m_step)-y;
     }
 
     private void errorRangeY( final double y, final String s ){

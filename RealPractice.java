@@ -26,49 +26,47 @@ import java.util.Random;
 
 public class RealPractice extends AbstractPractice{
 
-    private int m_lastYield;
-    private int m_lastEnv;
+    private int m_strat_yield;
+    private int m_strat_env;
 
     RealPractice( final int yield, final int env ){ 
         super(yield,env); 
-        m_lastYield = yield;
-        m_lastEnv = env;
+        m_strat_yield = 0;
+        m_strat_env = 0;
     }
 
     RealPractice(final AbstractPractice ap){ 
-        super(ap); 
-        m_lastYield = ap.m_yield_lvl;
-        m_lastEnv = ap.m_env_lvl;
+        this(ap.m_yield_lvl, ap.m_env_lvl); 
     }
 
-    public void update( Identity id, final double diffSatisfaction){ 
+    public void copy( final AbstractPractice toCopy ){ 
+        m_yield_lvl = toCopy.m_yield_lvl;
+        m_env_lvl = toCopy.m_env_lvl;
+        m_strat_yield = 0;
+        m_strat_env = 0;
+    }
+
+    public void update( final Identity id ){ 
     
-        // FIXME changer id ailleurs
-        if( diffSatisfaction > 0. ){
-           id.addStepYield(m_yield_lvl-m_lastYield); 
-           id.addStepEnv(m_env_lvl-m_lastEnv); 
-        }
-        m_lastYield = m_yield_lvl;
-        m_lastEnv = m_env_lvl;
-
         // TODO ajouter probaNoStrat dans id
-        if( Math.random() <= id.getProbaIncreaseYield() ) { m_yield_lvl++; }
-        else { 
-            m_yield_lvl--;
-            m_yield_lvl = (m_yield_lvl>0) ? m_yield_lvl : 0; 
-        }
+        if( Math.random() <= id.getProbaIncreaseYield() ) { m_strat_yield = 1; }
+        else { m_strat_yield = -1; }
+        m_yield_lvl += m_strat_yield;
+        m_yield_lvl = (m_yield_lvl>0) ? m_yield_lvl : 0; 
 
-        if( Math.random() <= id.getProbaIncreaseEnv() ) { m_env_lvl++; }
-        else { 
-            m_env_lvl--;
-            m_env_lvl = (m_env_lvl>0) ? m_env_lvl : 0; 
-        }
+        if( Math.random() <= id.getProbaIncreaseEnv() ) { m_strat_env = 1; }
+        else { m_strat_env = -1; }
+        m_env_lvl += m_strat_env;
+        m_env_lvl = (m_env_lvl>0) ? m_env_lvl : 0; 
     }
+
+    public int getStratYield(){ return m_strat_yield; }
+    public int getStratEnv(){ return m_strat_env; }
 
     public void printHeaders(final FileWriter fw, final int id){
         try{
-            fw.append("RealPractice_yield_"+id+"_"+",");
-            fw.append("RealPractice_env_"+id+"_"+",");
+            fw.append("realPractice_yield_"+id+"_"+",");
+            fw.append("realPractice_env_"+id+"_"+",");
         }catch(IOException e){ e.printStackTrace(); }
     }
 
