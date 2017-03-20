@@ -46,18 +46,25 @@ public class RealPractice extends AbstractPractice{
         m_strat_env = 0;
     }
 
-    public void update( final Identity id ){ 
-    
-        // TODO ajouter probaNoStrat dans id
-        if( Math.random() <= id.getProbaIncreaseYield() ) { m_strat_yield = 1; }
-        else { m_strat_yield = -1; }
-        m_yield_lvl += m_strat_yield;
-        m_yield_lvl = (m_yield_lvl>0) ? m_yield_lvl : 0; 
+    public void update( final Identity id, final Evaluation eval ){ 
 
-        if( Math.random() <= id.getProbaIncreaseEnv() ) { m_strat_env = 1; }
-        else { m_strat_env = -1; }
-        m_env_lvl += m_strat_env;
-        m_env_lvl = (m_env_lvl>0) ? m_env_lvl : 0; 
+        if( Math.random() <= eval.getProbaMinorChange() ){
+
+            if( Math.random() <= id.getProbaIncreaseYield() ) { m_strat_yield = 1; }
+            else { m_strat_yield = -1; }
+            m_yield_lvl += m_strat_yield;
+            m_yield_lvl = (m_yield_lvl>0) ? m_yield_lvl : 0; 
+
+            // if( Math.random() <= id.getProbaIncreaseEnv() ) { m_strat_env = 1; }
+            // else { m_strat_env = -1; }
+            // m_env_lvl += m_strat_env;
+            // m_env_lvl = (m_env_lvl>0) ? m_env_lvl : 0; 
+            
+        }
+        else{
+            m_strat_yield = 0;
+            m_strat_env = 0;
+        }
     }
 
     public int getStratYield(){ return m_strat_yield; }

@@ -44,14 +44,12 @@ public abstract class AbstractPractice{
         m_env_lvl = toCopy.m_env_lvl; 
     }
 
-    public double getDistFrom(final AbstractPractice ap, final int refYield, final int refEnv){
-        if( refYield <=0 ) { throw new RuntimeException("In Practice : refYield can't be inferior or equal to 0"); }
-        if( refEnv <=0 ) { throw new RuntimeException("In Practice : refEnv can't be inferior or equal to 0"); }
-        
-        double dist = 0.5*(Math.abs(ap.m_yield_lvl-m_yield_lvl)/((double) refYield) + Math.abs(ap.m_env_lvl-m_env_lvl)/((double) refEnv));
-        dist = (dist>1.) ? 1. : dist;
-
-        return dist;
+    // TODO voir avec sigmoid (coef tq S(maxYield+minYield/2) = 0.5)
+    public double getDistFrom(final AbstractPractice ap, final References ref){
+        double distYield = Math.abs(ap.m_yield_lvl-m_yield_lvl)/((double) ref.getMaxYield());
+        double distEnv =  Math.abs(ap.m_env_lvl-m_env_lvl)/((double) ref.getMaxEnv());
+        double dist = 0.5*(distYield + distEnv);
+        return (dist>1.) ? 1. : dist;
     }
 
     public double getPercentageYield(){

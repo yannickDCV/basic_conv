@@ -69,10 +69,10 @@ public class AlternativePractice extends AbstractPractice{
     public void setInquiringMode( final boolean isInquiring ){ m_isInquiring = isInquiring; }
     public boolean isInquiring(){ return m_isInquiring; }
 
-    public boolean isMajorChangeTriggered( final double needForChange, final Identity id, final NormPractice norm ){
+    public boolean isMajorChangeTriggered( final double needForChange, final Identity id, final NormPractice norm , final References ref){
 
-        double attitude = 1.-id.getDistFrom(this);
-        double subjectiveNorm = 1.-norm.getDistFrom(this,id.getRefMaxYield(),id.getRefMaxEnv());
+        double attitude = 1.-id.getDistFrom(this,ref);
+        double subjectiveNorm = 1.-norm.getDistFrom(this,ref);
         double pcb = m_viability;
 
         double intention = (1./3.) * ( attitude + subjectiveNorm + pcb ) ;

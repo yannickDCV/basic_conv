@@ -33,14 +33,13 @@ public class Individual {
     private NormPractice m_norm;
 
     private Identity m_identity;
+    private References m_references;
     private Influences m_influences;
+    private Evaluation m_evaluation;
+
     // private Accounts m_accounts;
-
-    private Sigmoid m_needForChange;
     private Sigmoid m_viability;
-
     private double m_lastGain=0;
-    private double m_lastSatisfaction=0;
 
     Individual( 
             final int id,
@@ -53,16 +52,9 @@ public class Individual {
         m_identity = new Identity(identity);
         m_norm = new NormPractice(practice);
         m_alternative = new AlternativePractice();
+        m_references = new References(practice);
         m_influences = new Influences(influences);
-        // TODO voir comment inverser sur constructeur
-        m_needForChange = new Sigmoid( 
-                Sigmoid.p_default_yStart, 
-                -1.*Sigmoid.p_default_xForYEqualMax, 
-                -1.*Sigmoid.p_default_xForYEqualMin, 
-                0.001,//Sigmoid.p_default_sigma, 
-                Sigmoid.p_default_nbSteps
-                );
-
+        m_evaluation = new Evaluation();
         m_viability = new Sigmoid();
             }
 
@@ -76,65 +68,46 @@ public class Individual {
     }
 
     public int[] getPeopleToDiscussWith(final int popSize){
-        // FIXME a verif
-        final int nbPeople = (int) Math.ceil(m_needForChange.getValue()*(popSize-1));
-        m_influences.setOpening(m_needForChange.getValue());
+        final int nbPeople = (int) Math.ceil(m_evaluation.getNeedForChange()*(popSize-1));
+        // TODO a revoir
+        // m_influences.setOpening(m_needForChange.getValue());
         return m_influences.getSomePeople(nbPeople);
     }
 
     public void discussWith( final Individual ind ){
-        m_identity.setMaxYieldIfBigger( ind.m_practice.getYield() );
-        m_identity.setMaxEnvIfBigger( ind.m_practice.getEnv() );
+        m_references.update( ind.m_practice );
 
         // FIXME a verif
-        m_influences.set(ind.m_id,m_identity.getDistFrom(ind.m_identity));
+        m_influences.set(ind.m_id,m_identity.getDistFrom(ind.m_identity, m_references));
+        // TODO à ref: rajouter norme dans calcul
         m_norm.update(ind.m_practice);
-        if( m_alternative.isInquiring()) { m_alternative.update(ind.m_practice, ind.m_viability.getValue()); }
+        if( m_alternative.isInquiring()) { 
+            m_alternative.update(ind.m_practice, ind.m_viability.getValue()); 
+            m_alternative.setInquiringMode(false);
+        }
     }
 
     public void iter( final double price ){
 
-        m_practice.update(m_identity);
-        // TODO m_accounts.update pour viability pour prendre en compte seuil de viabilité
+        m_practice.update(m_identity, m_evaluation);
+        // m_accounts.update()
         updateViability(price,m_practice);
+        m_evaluation.update( m_practice, m_identity, m_norm, m_viability, m_references);
+        m_identity.update(m_practice, m_evaluation, m_references);
+        m_references.update(m_practice);
 
-        double satisfaction = getSatisfaction( m_practice, m_identity, m_norm, m_viability );
-
-        m_identity.update(m_practice, satisfaction-m_lastSatisfaction);
-        updateNeedForChange(satisfaction);
-
-        if( Math.random() <= m_needForChange.getValue() ) {
+        if( Math.random() <= m_evaluation.getNeedForChange() ) {
             m_alternative.setInquiringMode(true);
-            if( m_alternative.isMajorChangeTriggered( m_needForChange.getValue(), m_identity, m_norm ) ){ 
+            if( m_evaluation.isMajorChangeTriggered( m_alternative, m_identity, m_norm, m_viability, m_references ) ){ 
                 m_practice.copy(m_alternative); 
                 m_alternative.reset();
-                m_needForChange.setValueEqualMin();
+                // TODO m_needForChange.setValueEqualMin();
+                m_alternative.setInquiringMode(false);
             }
         }
-        m_lastSatisfaction = satisfaction;
         m_influences.stepDownForAll();
 
-    }
 
-    private double getSatisfaction(final RealPractice pr, final Identity id, final NormPractice norm, final Sigmoid m_viability){
-
-        // TODO verif comportement attitude
-        double attitude = 1.-id.getDistFrom(pr);
-        double subjectiveNorm = 1.-norm.getDistFrom(pr,id.getRefMaxYield(),id.getRefMaxEnv());
-        double pcb = m_viability.getValue();
-
-        System.out.println("--------------------------------------------"); 
-        System.out.println( "m_id = " + m_id ); 
-        System.out.println( "attitude = " + attitude ); 
-        System.out.println( "subjectiveNorm = " + subjectiveNorm ); 
-        System.out.println( "pcb = " + pcb ); 
-
-        // TODO dans longtemps : voir dynamique a,b,c
-        // FIXME pour test 2*pcb
-        double satisfaction = (1./4.) * ( attitude + subjectiveNorm + 2*pcb ) ;
-        System.out.println( "satisfaction = " + satisfaction ); 
-
-        return satisfaction;
     }
 
     private void updateViability( final double price, final RealPractice pr){
@@ -145,18 +118,15 @@ public class Individual {
         m_lastGain = gain;
     }
 
-    private void updateNeedForChange( final double satisfaction ){
-        m_needForChange.stepFromSigmoid(Math.signum(satisfaction-0.5));
-    }
-
     public void printHeaders(final FileWriter fw){
         m_practice.printHeaders(fw,m_id); 
         m_identity.printHeaders(fw,m_id); 
         m_influences.printHeaders(fw,m_id); 
         m_alternative.printHeaders(fw,m_id); 
         m_norm.printHeaders(fw,m_id); 
+        m_evaluation.printHeaders(fw,m_id); 
+        // m_accounts.printHeaders(fw,m_id); 
         try{
-            fw.append("needForChange_"+m_id+"_"+",");
             fw.append("viability_"+m_id+"_"+",");
         }catch(IOException e){ e.printStackTrace(); }
     }
@@ -167,8 +137,9 @@ public class Individual {
         m_influences.print(fw); 
         m_alternative.print(fw); 
         m_norm.print(fw); 
+        m_evaluation.print(fw); 
+        // m_accounts.print(fw); 
         try{
-            fw.append(m_needForChange.getValue() + ",");
             fw.append(m_viability.getValue() + ",");
         }catch(IOException e){ e.printStackTrace(); }
     }

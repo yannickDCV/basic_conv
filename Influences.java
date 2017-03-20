@@ -90,8 +90,8 @@ public class Influences {
 
         ArrayList<Double> probaArray = new ArrayList<Double>(m_influences);
 
-        System.out.println( "m_influences = " + m_influences ); 
-        System.out.println( "m_id = " + m_id ); 
+        // System.out.println( "m_influences = " + m_influences ); 
+        // System.out.println( "m_id = " + m_id ); 
 
         for(int i=0; i<nbPeople; i++){
             double sum = getSumInf(probaArray);
@@ -104,7 +104,7 @@ public class Influences {
                 sumProba += probaArray.get(j);
                 if( !isSet && rand <= sumProba ){
                     people[i]=j;
-                    System.out.println( "people["+i+"] = " + people[i] ); 
+                    // System.out.println( "people["+i+"] = " + people[i] ); 
                     probaArray.set(j,0.);
                     isSet = true;
                 }

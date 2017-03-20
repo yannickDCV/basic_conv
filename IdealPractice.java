@@ -39,16 +39,19 @@ public class IdealPractice extends AbstractPractice{
         m_env_lvl = (m_env_lvl>0) ? m_env_lvl : 0; 
     }
 
-    public void update( final int maxYield, final int maxEnv, final double percentYield, final double percentEnv ){
+    public void update( final double percentYield, final double percentEnv, final References ref ){
         if ( percentYield < 0. ) { throw new RuntimeException("In IdealPractice: percentYield can't be inferior than 0"); };
         if ( percentYield > 1. ) { throw new RuntimeException("In IdealPractice: percentYield can't be superior than 1"); };
         if ( percentEnv < 0. ) { throw new RuntimeException("In IdealPractice: percentEnv can't be inferior than 0"); };
         if ( percentEnv > 1. ) { throw new RuntimeException("In IdealPractice: percentEnv can't be superior than 1"); };
-        if ( maxYield <= 0. ) { throw new RuntimeException("In IdealPractice: maxYield can't be inferior or equal to 0"); };
-        if ( maxEnv <= 0. ) { throw new RuntimeException("In IdealPractice: maxEnv can't be inferior or equal to 0"); };
 
-        m_yield_lvl = (int) Math.round( maxYield*percentYield );
-        m_env_lvl = (int) Math.round( maxEnv*percentEnv );
+        final int maxYield = ref.getMaxYield();
+        final int minYield = ref.getMinYield();
+        final int maxEnv = ref.getMaxEnv();
+        final int minEnv = ref.getMinEnv();
+
+        m_yield_lvl = (int) Math.round( (maxYield-minYield)*percentYield+minYield );
+        m_env_lvl = (int) Math.round( (maxEnv-minEnv)*percentEnv+minEnv );
     }
 
     public void printHeaders(final FileWriter fw, final int id){

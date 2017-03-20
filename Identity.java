@@ -27,44 +27,32 @@ import java.util.Random;
 public class Identity{
 
     IdealPractice m_idPractice;
-    int m_maxYieldEverSeen, m_maxEnvEverSeen;
     Sigmoid m_importanceYield, m_importanceEnv;
 
-    Identity(final AbstractPractice ap, final int maxYield, final int maxEnv, final double percYield, final double percEnv ){
+    Identity(final AbstractPractice ap, final double percYield, final double percEnv ){
         m_idPractice = new IdealPractice( ap );
-        m_maxYieldEverSeen = maxYield;
-        m_maxEnvEverSeen = maxEnv;
         m_importanceYield = new Sigmoid(percYield);
         m_importanceEnv = new Sigmoid(percEnv);
     }
 
     Identity( final Identity id ){
-        this(id.m_idPractice, id.m_maxYieldEverSeen, id.m_maxEnvEverSeen, id.m_importanceYield.getValue(), id.m_importanceEnv.getValue());
+        this(id.m_idPractice, id.m_importanceYield.getValue(), id.m_importanceEnv.getValue());
     }
 
     Identity( final AbstractPractice ap ){
-        this(ap, ap.getYield(), ap.getEnv(), ap.getPercentageYield(), ap.getPercentageEnv());
+        this(ap, ap.getPercentageYield(), ap.getPercentageEnv());
     }
 
-    public void update( final RealPractice rp, final double diffSatisfaction ){ 
-        if( diffSatisfaction > 0. ){
+    public void update( final RealPractice rp, final Evaluation eval, final References ref ){ 
+        if( eval.getDiffSatisfaction() >= 0. ){
            addStepYield(rp.getStratYield()); 
            addStepEnv(rp.getStratEnv()); 
         }
-        // TODO a ref metropolis. proba redescendre
         else{
            addStepYield(-1*rp.getStratYield()); 
            addStepEnv(-1*rp.getStratEnv()); 
         }
-        m_idPractice.update(m_maxYieldEverSeen, m_maxEnvEverSeen, m_importanceYield.getValue(), m_importanceEnv.getValue());
-    }
-
-    public void setMaxYieldIfBigger( final int yield ){
-        if( m_maxYieldEverSeen < yield){ m_maxYieldEverSeen = yield; }
-    }
-
-    public void setMaxEnvIfBigger( final int env ){
-        if( m_maxEnvEverSeen < env){ m_maxEnvEverSeen = env; }
+        m_idPractice.update(m_importanceYield.getValue(), m_importanceEnv.getValue(), ref);
     }
 
     public void addStepYield( final double coef ){ m_importanceYield.stepFromSigmoid(coef); }
@@ -72,22 +60,18 @@ public class Identity{
 
     public double getProbaIncreaseYield(){ return m_importanceYield.getValue(); }
     public double getProbaIncreaseEnv(){ return m_importanceEnv.getValue(); }
-    public int getRefMaxYield(){ return m_maxYieldEverSeen; }
-    public int getRefMaxEnv(){ return m_maxEnvEverSeen; }
+    public IdealPractice getIdealPractice(){ return m_idPractice; }
 
-    public IdealPractice getIdealPractice(){
-        return m_idPractice;
-    }
-
-    public double getDistFrom( final Identity id ){
-        return getIdealPractice().getDistFrom( id.getIdealPractice(), m_maxYieldEverSeen, m_maxEnvEverSeen );
+    // FIXME avec IdealPractice ou direct m_importance*?
+    public double getDistFrom( final Identity id, final References ref ){
+        return getIdealPractice().getDistFrom( id.getIdealPractice(), ref );
         // double distYield = Math.abs(m_importanceYield.getValue()-id.m_importanceYield.getValue());
         // double distEnv = Math.abs(m_importanceEnv.getValue()-id.m_importanceEnv.getValue());
         // return 0.5*(distYield + distEnv);
     }
 
-    public double getDistFrom( final AbstractPractice ap ){
-        return m_idPractice.getDistFrom( ap, m_maxYieldEverSeen, m_maxEnvEverSeen );
+    public double getDistFrom( final AbstractPractice ap, final References ref ){
+        return m_idPractice.getDistFrom(ap,ref);
     }
 
     public void printHeaders(final FileWriter fw, final int id){
