@@ -26,17 +26,24 @@ import java.io.*;
 
 public class Population {
 
-    private int m_popSize;
     private final Individual[] m_individuals;
 
     Population( final int popSize ){
-        m_popSize = popSize;
         m_individuals = new Individual[popSize];
 
-        RealPractice practice = new RealPractice(100,100);
-        Identity identity = new Identity(practice);
-
         for(int i=0; i<m_individuals.length; i++){
+
+            int yieldPr = (int) (Math.random()*100+1);
+            int EnvPr = (int) (Math.random()*100+1);
+
+            // FIXME voir erreur sig(0) et sig(1)
+            // FIXME voir erreur yieldpr =0 pour References
+            double yieldId = 0.1*Math.random()+0.45;
+            double envId =  0.1*Math.random()+0.45;
+
+            RealPractice practice = new RealPractice(yieldPr,EnvPr);
+            Identity identity = new Identity(practice,yieldId,envId);
+
             Influences influences = new Influences(i,popSize, 0.1);
             Individual indToAdd = new Individual(i, practice, identity, influences);
             m_individuals[i] = new Individual(indToAdd);
@@ -47,19 +54,16 @@ public class Population {
     public void iter(final double price) {
 
         for(int i=0; i<m_individuals.length; i++){
-            int[] ids = m_individuals[i].getPeopleToDiscussWith(m_individuals.length);
+            int nbPeople = (int) Math.ceil(m_individuals[i].getNeedForChange()*(m_individuals.length-1));
+            System.out.println( "nbPeople = " + nbPeople ); 
+            int[] ids = m_individuals[i].getPeopleToDiscussWith(nbPeople);
             for(int j=0; j<ids.length; j++){
                 m_individuals[i].discussWith( m_individuals[ids[j]] );
             }
         }
 
           for(int i=0; i<m_individuals.length; i++){
-              if (i==0){
-                  m_individuals[i].iter(12.);
-              }
-              else{
                   m_individuals[i].iter(price);
-              }
           }
 
     }

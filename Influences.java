@@ -77,16 +77,43 @@ public class Influences {
         return m_influences.get(id); 
     }
 
-    public void stepDownForAll(){
-         for(int i=0; i<m_influences.size(); i++){
-             double inf = m_influences.get(i);
-             m_influences.set(i,inf+m_influence.getStepFromDirectSigmoid(inf,1.));
-         }
-    }
-
-    public int[] getSomePeople(final int nbPeople){
+    public int[] getSomePeople(final int nbPeople, final double needForChange){
+        if ( needForChange < 0. ) { throw new RuntimeException("In Influence: needForChange can't be inferior than 0"); }
+        if ( needForChange > 1. ) { throw new RuntimeException("In Influence: needForChange can't be superior than 1"); }
         if ( nbPeople >= m_influences.size() ) { throw new RuntimeException("In Influence: nbPeople superior or equal than popSize"); }
         int[] people = new int[nbPeople];
+
+        ArrayList<Integer> peopleInf = new ArrayList<Integer>(getSomePeopleWithInf(nbPeople));
+        ArrayList<Integer> peopleRandom = new ArrayList<Integer>(getSomePeopleRandomly(nbPeople));
+
+        // FIXME peut parler 2 fois  la même personne
+        for(int i=0; i<nbPeople; i++){
+            if( Math.random() <= needForChange ){
+                people[i] = peopleRandom.get(0);
+            }
+            else{
+                people[i] = peopleInf.get(0);
+            }
+        }
+
+
+        return people;
+    }
+
+    private ArrayList<Integer> getSomePeopleRandomly(final int nbPeople){
+        if ( nbPeople >= m_influences.size() ) { throw new RuntimeException("In Influence: nbPeople superior or equal than popSize"); }
+        ArrayList<Integer> people = new ArrayList<Integer>(nbPeople);
+        for(int i=0; i<nbPeople; i++){
+            int rand = new Random().nextInt(m_influences.size());
+            if( rand == m_id ) { i--; continue; }
+            people.add(i,rand);
+        }
+        return people;
+    }
+
+    private ArrayList<Integer> getSomePeopleWithInf(final int nbPeople){
+        if ( nbPeople >= m_influences.size() ) { throw new RuntimeException("In Influence: nbPeople superior or equal than popSize"); }
+        ArrayList<Integer> people = new ArrayList<Integer>(nbPeople);
 
         ArrayList<Double> probaArray = new ArrayList<Double>(m_influences);
 
@@ -103,8 +130,8 @@ public class Influences {
                 probaArray.set(j,probaArray.get(j)/sum);
                 sumProba += probaArray.get(j);
                 if( !isSet && rand <= sumProba ){
-                    people[i]=j;
-                    // System.out.println( "people["+i+"] = " + people[i] ); 
+                    people.add(i,j);
+                    // System.out.println( "people["+i+"] = " + people.get(i) ); 
                     probaArray.set(j,0.);
                     isSet = true;
                 }
@@ -113,15 +140,6 @@ public class Influences {
         }
 
         return people;
-    }
-
-    // FIXME l'opening n'a pas l'effet voulu : Si on rencontre, alors on le met à 0.5... Mais on rencontre pas car faible inf
-    public void setOpening ( final double needForChange ){
-        if ( needForChange < 0. ) { throw new RuntimeException("In Influence: needForChange can't be inferior than 0"); }
-        if ( needForChange > 1. ) { throw new RuntimeException("In Influence: needForChange can't be superior than 1"); }
-
-        double opening = needForChange*0.5;
-        m_influence.setCoef(p_distIdForMaxInfluence,p_distIdForMinInfluence,opening);
     }
 
     private int getNbInfUpThan( final double threshold ){

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Irstea
+ * Copyright (C) 2017 Irstea
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,49 +16,46 @@
  */
 package model.basic_conv;
 
-import java.util.*;
+import java.util.Arrays;
 import java.io.*;
-
+import java.util.Random;
 /**
  *
  * @author
  */
-public class Economy {
 
-    private double m_price;
-    private Scanner m_scan;
+public class Accounts{
 
-    public Economy( final String fileName ) {
-        try {
-            m_scan = new Scanner(new File(fileName));
-            m_scan.useLocale(Locale.US);
-        } catch (FileNotFoundException e1) { e1.printStackTrace(); }
-        // FIXME
-        m_price = 10.;
+    private Sigmoid m_viability;
+    private double m_gain=0., m_lastGain=0.;
+
+    Accounts(){ m_viability = new Sigmoid(); }
+
+    public void update( final RealPractice pr, final double price ){
+        // TODO price = correctPriceFromEnv(price, m_practice);
+        // FIXME pb si prix en marche d'escalier
+        m_gain = price*pr.getYield();
+        // TODO à reref
+        m_viability.stepFromSigmoid(Math.signum(m_gain-m_lastGain));
+        m_lastGain = m_gain;
     }
 
-    public void iter(){
-        if(m_scan.hasNextDouble()) {
-            m_price = m_scan.nextDouble();
-        }
-        else {
-            throw new RuntimeException("Error during reading prices file");
-        }
-    } 
+    public double getViability(){ return m_viability.getValue(); }
 
-    public void printHeaders(final FileWriter fw){
+    public void printHeaders(final FileWriter fw, final int id){
         try{
-            fw.append("price"+",");
+            fw.append("viability_"+id+"_"+",");
+            fw.append("gain_"+id+"_"+",");
         }catch(IOException e){ e.printStackTrace(); }
     }
 
     public void print(final FileWriter fw){
         try{
-            fw.append(m_price+",");
+            fw.append(m_viability.getValue() + ",");
+            fw.append(m_gain + ",");
         }catch(IOException e){ e.printStackTrace(); }
     }
 
-    public double getPrice(){ return m_price; }
-
 };
+
 

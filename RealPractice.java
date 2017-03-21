@@ -50,15 +50,16 @@ public class RealPractice extends AbstractPractice{
 
         if( Math.random() <= eval.getProbaMinorChange() ){
 
-            if( Math.random() <= id.getProbaIncreaseYield() ) { m_strat_yield = 1; }
+            double rand = Math.random();
+            if( rand <= id.getProbaIncreaseYield() ) { m_strat_yield = 1; }
             else { m_strat_yield = -1; }
             m_yield_lvl += m_strat_yield;
             m_yield_lvl = (m_yield_lvl>0) ? m_yield_lvl : 0; 
 
-            // if( Math.random() <= id.getProbaIncreaseEnv() ) { m_strat_env = 1; }
-            // else { m_strat_env = -1; }
-            // m_env_lvl += m_strat_env;
-            // m_env_lvl = (m_env_lvl>0) ? m_env_lvl : 0; 
+            if( Math.random() <= id.getProbaIncreaseEnv() ) { m_strat_env = 1; }
+            else { m_strat_env = -1; }
+            m_env_lvl += m_strat_env;
+            m_env_lvl = (m_env_lvl>0) ? m_env_lvl : 0; 
             
         }
         else{

@@ -47,7 +47,9 @@ public abstract class AbstractPractice{
     // TODO voir avec sigmoid (coef tq S(maxYield+minYield/2) = 0.5)
     public double getDistFrom(final AbstractPractice ap, final References ref){
         double distYield = Math.abs(ap.m_yield_lvl-m_yield_lvl)/((double) ref.getMaxYield());
-        double distEnv =  Math.abs(ap.m_env_lvl-m_env_lvl)/((double) ref.getMaxEnv());
+        // double distEnv = Math.abs(ap.m_env_lvl-m_env_lvl)/((double) ref.getMaxEnv());
+        // TODO FIXME TODO
+        double distEnv = distYield;
         double dist = 0.5*(distYield + distEnv);
         return (dist>1.) ? 1. : dist;
     }

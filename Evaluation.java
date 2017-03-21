@@ -33,63 +33,46 @@ public class Evaluation{
     Evaluation(){
         m_satisfaction = new Percentage(0.5);
         m_lastSatisfaction = new Percentage(m_satisfaction);
-        // TODO voir comment inverser sur constructeur
-        // TODO voir pb needForChange
+        // FIXME calibration
         m_needForChange = new Sigmoid( 
-                Sigmoid.p_default_yStart, 
+                0.5, 
                 -1.*Sigmoid.p_default_xForYEqualMax, 
                 -1.*Sigmoid.p_default_xForYEqualMin, 
-                0.05,//Sigmoid.p_default_sigma, 
-                100//Sigmoid.p_default_nbSteps
+                0.001,//Sigmoid.p_default_sigma, 
+                2//Sigmoid.p_default_nbSteps
                 );
 
     }
 
-    public void update( final RealPractice pr, final Identity id, final NormPractice norm , final Sigmoid via, final References ref){
-        final double intention = getIntention(pr,id,norm,via,ref);
-        m_satisfaction.set(intention);
+    public void update( final RealPractice pr, final Identity id, final NormPractice norm , final Accounts acc, final References ref){
         m_lastSatisfaction.set(m_satisfaction);
-        // FIXME a reref
-        m_needForChange.stepFromSigmoid(Math.signum(m_satisfaction.getValue()-0.5));
+        final double intention = getIntention(pr,id,norm,acc,ref);
+        m_satisfaction.set(intention);
+        m_needForChange.stepFromSigmoid(getDiffSatisfaction());
     }
 
-    private double getIntention(final AbstractPractice ap, final Identity id, final NormPractice norm, final Sigmoid viability, final References ref){
+    private double getIntention(final AbstractPractice ap, final Identity id, final NormPractice norm, final Accounts acc, final References ref){
 
         final double attitude = 1.-id.getDistFrom(ap,ref);
         final double subjectiveNorm = 1.-norm.getDistFrom(ap,ref);
-        final double pbc = viability.getValue();
-
-        System.out.println("--------------------------------------------"); 
-        System.out.println( "id.getProbaIncreaseYield() = " + id.getProbaIncreaseYield() );
-        System.out.println( "id.getProbaIncreaseEnv() = " + id.getProbaIncreaseEnv() );
-        System.out.println( "ref.getMaxYield() = " + ref.getMaxYield() );
-        System.out.println( "ref.getMinYield() = " + ref.getMinYield() );
-        System.out.println( "ref.getMaxEnv() = " + ref.getMaxEnv() );
-        System.out.println( "ref.getMinEnv() = " + ref.getMinEnv() );
-        System.out.println( "id.getIdealPractice().getYield() = " + id.getIdealPractice().getYield() );
-        System.out.println( "id.getIdealPractice().getEnv() = " + id.getIdealPractice().getEnv() );
-        System.out.println( "id.getDistFrom(ap,ref) = " + id.getDistFrom(ap,ref) );
-        System.out.println( "ap.getYield() = " + ap.getYield() );
-        System.out.println( "ap.getEnv() = " + ap.getEnv() );
+        final double pbc = acc.getViability();
 
         // TODO dans longtemps : voir dynamique a,b,c
-        // final double intention = (1./3.) * ( attitude + subjectiveNorm + pbc ) ;
-         final double intention = attitude;
-         //final double intention = subjectiveNorm;
-        // final double intention = pbc;
+         final double intention = (1./3.) * ( attitude + subjectiveNorm + pbc ) ;
+          // final double intention = attitude;
+          // final double intention = subjectiveNorm;
+          // final double intention = pbc;
 
         return intention;
     }
 
-    public double getProbaMinorChange(){ return m_satisfaction.getValue(); }
+    public double getProbaMinorChange(){ return 1.-m_satisfaction.getValue(); }
     public double getNeedForChange(){ return m_needForChange.getValue(); }
     public double getDiffSatisfaction(){ return m_satisfaction.getValue()-m_lastSatisfaction.getValue(); }
 
-    public boolean isMajorChangeTriggered( final AlternativePractice alt, final Identity id, final NormPractice norm , final Sigmoid via, final References ref){
-        final double intention = getIntention(alt,id,norm,via,ref);
+    public boolean isMajorChangeTriggered( final AlternativePractice alt, final Identity id, final NormPractice norm , final Accounts acc, final References ref){
+        final double intention = getIntention(alt,id,norm,acc,ref);
         final double resistance = (1. - intention);
-
-        System.out.println("Major Change");
 
         return (m_needForChange.getValue() > resistance);
     }

@@ -36,10 +36,7 @@ public class Individual {
     private References m_references;
     private Influences m_influences;
     private Evaluation m_evaluation;
-
-    // private Accounts m_accounts;
-    private Sigmoid m_viability;
-    private double m_lastGain=0;
+    private Accounts m_accounts;
 
     Individual( 
             final int id,
@@ -55,7 +52,7 @@ public class Individual {
         m_references = new References(practice);
         m_influences = new Influences(influences);
         m_evaluation = new Evaluation();
-        m_viability = new Sigmoid();
+        m_accounts = new Accounts();
             }
 
     Individual( final Individual toClone ){
@@ -67,22 +64,18 @@ public class Individual {
                 );
     }
 
-    public int[] getPeopleToDiscussWith(final int popSize){
-        final int nbPeople = (int) Math.ceil(m_evaluation.getNeedForChange()*(popSize-1));
-        // TODO a revoir
-        // m_influences.setOpening(m_needForChange.getValue());
-        return m_influences.getSomePeople(nbPeople);
+    public int[] getPeopleToDiscussWith(final int nbPeople){ 
+        return m_influences.getSomePeople(nbPeople, m_evaluation.getNeedForChange()); 
     }
 
     public void discussWith( final Individual ind ){
-        m_references.update( ind.m_practice );
 
-        // FIXME a verif
+        m_references.update( ind.m_practice );
         m_influences.set(ind.m_id,m_identity.getDistFrom(ind.m_identity, m_references));
-        // TODO à ref: rajouter norme dans calcul
         m_norm.update(ind.m_practice);
+
         if( m_alternative.isInquiring()) { 
-            m_alternative.update(ind.m_practice, ind.m_viability.getValue()); 
+            m_alternative.update(ind.m_practice, ind.m_accounts); 
             m_alternative.setInquiringMode(false);
         }
     }
@@ -90,33 +83,26 @@ public class Individual {
     public void iter( final double price ){
 
         m_practice.update(m_identity, m_evaluation);
-        // m_accounts.update()
-        updateViability(price,m_practice);
-        m_evaluation.update( m_practice, m_identity, m_norm, m_viability, m_references);
+        m_accounts.update(m_practice,price);
+        m_evaluation.update( m_practice, m_identity, m_norm, m_accounts, m_references);
         m_identity.update(m_practice, m_evaluation, m_references);
         m_references.update(m_practice);
 
         if( Math.random() <= m_evaluation.getNeedForChange() ) {
             m_alternative.setInquiringMode(true);
-            if( m_evaluation.isMajorChangeTriggered( m_alternative, m_identity, m_norm, m_viability, m_references ) ){ 
+            if( m_evaluation.isMajorChangeTriggered( m_alternative, m_identity, m_norm, m_accounts, m_references ) ){ 
                 m_practice.copy(m_alternative); 
                 m_alternative.reset();
                 // TODO m_needForChange.setValueEqualMin();
                 m_alternative.setInquiringMode(false);
             }
         }
-        m_influences.stepDownForAll();
+        // TODO changement inf a propos m_influences.stepDownForAll();
 
 
     }
 
-    private void updateViability( final double price, final RealPractice pr){
-        // TODO price = correctPriceFromEnv(price, m_practice);
-        // FIXME pb si prix en marche d'escalier
-        double gain = price*pr.getYield();
-        m_viability.stepFromSigmoid(Math.signum(gain-m_lastGain));
-        m_lastGain = gain;
-    }
+    public double getNeedForChange(){ return m_evaluation.getNeedForChange(); }
 
     public void printHeaders(final FileWriter fw){
         m_practice.printHeaders(fw,m_id); 
@@ -125,10 +111,7 @@ public class Individual {
         m_alternative.printHeaders(fw,m_id); 
         m_norm.printHeaders(fw,m_id); 
         m_evaluation.printHeaders(fw,m_id); 
-        // m_accounts.printHeaders(fw,m_id); 
-        try{
-            fw.append("viability_"+m_id+"_"+",");
-        }catch(IOException e){ e.printStackTrace(); }
+        m_accounts.printHeaders(fw,m_id); 
     }
 
     public void print(final FileWriter fw){
@@ -138,10 +121,7 @@ public class Individual {
         m_alternative.print(fw); 
         m_norm.print(fw); 
         m_evaluation.print(fw); 
-        // m_accounts.print(fw); 
-        try{
-            fw.append(m_viability.getValue() + ",");
-        }catch(IOException e){ e.printStackTrace(); }
+        m_accounts.print(fw); 
     }
 
 };

@@ -44,30 +44,23 @@ public class Identity{
     }
 
     public void update( final RealPractice rp, final Evaluation eval, final References ref ){ 
-        if( eval.getDiffSatisfaction() >= 0. ){
-           addStepYield(rp.getStratYield()); 
-           addStepEnv(rp.getStratEnv()); 
-        }
-        else{
-           addStepYield(-1*rp.getStratYield()); 
-           addStepEnv(-1*rp.getStratEnv()); 
-        }
+
+        int coef = ( eval.getDiffSatisfaction() >= 0. ) ? 1 : -1;
+
+        m_importanceYield.stepFromSigmoid(coef*rp.getStratYield()); 
+        m_importanceEnv.stepFromSigmoid(coef*rp.getStratEnv()); 
+
         m_idPractice.update(m_importanceYield.getValue(), m_importanceEnv.getValue(), ref);
     }
-
-    public void addStepYield( final double coef ){ m_importanceYield.stepFromSigmoid(coef); }
-    public void addStepEnv( final double coef ){ m_importanceEnv.stepFromSigmoid(coef); }
 
     public double getProbaIncreaseYield(){ return m_importanceYield.getValue(); }
     public double getProbaIncreaseEnv(){ return m_importanceEnv.getValue(); }
     public IdealPractice getIdealPractice(){ return m_idPractice; }
 
-    // FIXME avec IdealPractice ou direct m_importance*?
     public double getDistFrom( final Identity id, final References ref ){
-        return getIdealPractice().getDistFrom( id.getIdealPractice(), ref );
-        // double distYield = Math.abs(m_importanceYield.getValue()-id.m_importanceYield.getValue());
-        // double distEnv = Math.abs(m_importanceEnv.getValue()-id.m_importanceEnv.getValue());
-        // return 0.5*(distYield + distEnv);
+        double distYield = Math.abs(m_importanceYield.getValue()-id.m_importanceYield.getValue());
+        double distEnv = Math.abs(m_importanceEnv.getValue()-id.m_importanceEnv.getValue());
+        return 0.5*(distYield + distEnv);
     }
 
     public double getDistFrom( final AbstractPractice ap, final References ref ){
