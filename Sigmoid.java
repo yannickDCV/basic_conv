@@ -28,7 +28,7 @@ public final class Sigmoid {
     final static public int p_default_xForYEqualMax = 8000;
     final static public int p_default_xForYEqualMin = -8000;
     final static public double p_default_sigma = 0.005;
-    final static public int p_default_nbSteps = 1000;
+    final static public int p_default_nbSteps = 100;
 
     final static public double p_limit_min = 0.000001;
     final static public double p_limit_max = 0.999999;
@@ -40,15 +40,7 @@ public final class Sigmoid {
     private double m_step;
     private double m_maxY, m_minY;
 
-    public Sigmoid (){ 
-        this( 
-                p_default_yStart, 
-                p_default_xForYEqualMax, 
-                p_default_xForYEqualMin, 
-                p_default_sigma, 
-                p_default_nbSteps
-            ); 
-    } 
+    public Sigmoid (){ this( p_default_yStart ); } 
 
     public Sigmoid (final double yStart){ 
         this( 
@@ -83,6 +75,7 @@ public final class Sigmoid {
     public void setCoef( final double xForYEqualMax, final double xForYEqualMin, final double sigma){
 
         if ( sigma >= 1. || sigma <= 0. ) { throw new RuntimeException("pb in Sigmoid.setCoef() on sigma"); };
+        if (xForYEqualMax == xForYEqualMin) { throw new RuntimeException("pb in Sigmoid.setCoef() : xForYEqualMax=xForYEqualMin"); };
 
         m_coef_steep = (1./(xForYEqualMax-xForYEqualMin))*Math.log((1.-sigma)*(1.-sigma)/(sigma*sigma));
         m_coef_offset = -m_coef_steep*xForYEqualMin - Math.log( (1./sigma)-1.);
@@ -126,7 +119,7 @@ public final class Sigmoid {
         m_y = y; 
     }
 
-    public double getValue(){ return m_y; }
+    public double get(){ return m_y; }
 
     private void errorRangeY( final double y, final String s ){
         if ( y <= 0. ) { throw new RuntimeException("In "+s+": y can't be inferior or equal to 0"); };

@@ -26,8 +26,6 @@ import java.util.Random;
 
 public class AlternativePractice extends AbstractPractice{
 
-    // FIXME pas classe
-    private final double p_coef_update = 10.;
     // TODO mettre role uncertainty
     // private final double p_uncertainty_start = 0.99;
 
@@ -51,7 +49,7 @@ public class AlternativePractice extends AbstractPractice{
     // FIXME a reref
     public void update(final RealPractice rp, final Accounts acc){
         double viability = acc.getViability();
-        double viability_ = m_viability.getValue();
+        double viability_ = m_viability.get();
 
         if ( viability_+viability == 0. ) { throw new RuntimeException("In AltPractice.update: division by 0"); };
 
@@ -68,6 +66,8 @@ public class AlternativePractice extends AbstractPractice{
         m_viability.set(0.);
         m_isInquiring=false;
     }
+
+    public double getViability(){ return m_viability.get(); }
 
     public void setInquiringMode( final boolean isInquiring ){ m_isInquiring = isInquiring; }
     public boolean isInquiring(){ return m_isInquiring; }

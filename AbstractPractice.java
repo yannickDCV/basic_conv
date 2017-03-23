@@ -44,6 +44,7 @@ public abstract class AbstractPractice{
         m_env_lvl = toCopy.m_env_lvl; 
     }
 
+    /*
     // TODO voir avec sigmoid (coef tq S(maxYield+minYield/2) = 0.5)
     public double getDistFrom(final AbstractPractice ap, final References ref){
         double distYield = Math.abs(ap.m_yield_lvl-m_yield_lvl)/((double) ref.getMaxYield());
@@ -52,6 +53,22 @@ public abstract class AbstractPractice{
         double distEnv = distYield;
         double dist = 0.5*(distYield + distEnv);
         return (dist>1.) ? 1. : dist;
+    }
+    */
+
+    //TODO important : ajouter pour env
+    public double getPerceivedDistFrom(final AbstractPractice ap, final References ref){
+
+            int limitSig;
+            if( ap.m_yield_lvl >= m_yield_lvl ){ limitSig = ref.getMaxYield(); }
+            else{ limitSig = ref.getMinYield(); }
+
+            if( limitSig == m_yield_lvl ){ return 1.; }
+            else{
+                Sigmoid sig = new Sigmoid(Sigmoid.p_default_yStart, limitSig, m_yield_lvl, Sigmoid.p_default_sigma, Sigmoid.p_default_nbSteps);
+                return sig.getFromDirectSigmoid(ap.m_yield_lvl);
+            }
+
     }
 
     public double getPercentageYield(){

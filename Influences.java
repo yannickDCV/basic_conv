@@ -25,7 +25,7 @@ import java.util.Random;
  */
 
 // TODO Mettre une sigmoid pour chaque inf de m_influences?
-// TODO Inner classe influence?
+// TODO Inner class influence?
 public class Influences {
 
     // FIXME pas classe

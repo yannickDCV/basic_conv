@@ -26,21 +26,20 @@ import java.util.Random;
 
 public class Identity{
 
-    IdealPractice m_idPractice;
     Sigmoid m_importanceYield, m_importanceEnv;
 
-    Identity(final AbstractPractice ap, final double percYield, final double percEnv ){
-        m_idPractice = new IdealPractice( ap );
+    Identity(final double percYield, final double percEnv ){
+        //TODO test pourcentage
         m_importanceYield = new Sigmoid(percYield);
         m_importanceEnv = new Sigmoid(percEnv);
     }
 
     Identity( final Identity id ){
-        this(id.m_idPractice, id.m_importanceYield.getValue(), id.m_importanceEnv.getValue());
+        this(id.m_importanceYield.get(), id.m_importanceEnv.get());
     }
 
     Identity( final AbstractPractice ap ){
-        this(ap, ap.getPercentageYield(), ap.getPercentageEnv());
+        this(ap.getPercentageYield(), ap.getPercentageEnv());
     }
 
     public void update( final RealPractice rp, final Evaluation eval, final References ref ){ 
@@ -49,22 +48,22 @@ public class Identity{
 
         m_importanceYield.stepFromSigmoid(coef*rp.getStratYield()); 
         m_importanceEnv.stepFromSigmoid(coef*rp.getStratEnv()); 
-
-        m_idPractice.update(m_importanceYield.getValue(), m_importanceEnv.getValue(), ref);
     }
 
-    public double getProbaIncreaseYield(){ return m_importanceYield.getValue(); }
-    public double getProbaIncreaseEnv(){ return m_importanceEnv.getValue(); }
-    public IdealPractice getIdealPractice(){ return m_idPractice; }
+    public double getProbaIncreaseYield(){ return m_importanceYield.get(); }
+    public double getProbaIncreaseEnv(){ return m_importanceEnv.get(); }
+    private IdealPractice getIdealPractice(final References ref){ return (new IdealPractice(m_importanceYield,m_importanceEnv,ref)); }
 
     public double getDistFrom( final Identity id, final References ref ){
-        double distYield = Math.abs(m_importanceYield.getValue()-id.m_importanceYield.getValue());
-        double distEnv = Math.abs(m_importanceEnv.getValue()-id.m_importanceEnv.getValue());
-        return 0.5*(distYield + distEnv);
+        double distYield = Math.abs(m_importanceYield.get()-id.m_importanceYield.get());
+        double distEnv = Math.abs(m_importanceEnv.get()-id.m_importanceEnv.get());
+        // TODO à changer. Pour test juste yield
+        //return 0.5*(distYield + distEnv);
+        return distYield;
     }
 
-    public double getDistFrom( final AbstractPractice ap, final References ref ){
-        return m_idPractice.getDistFrom(ap,ref);
+    public double getPerceivedDistFrom( final AbstractPractice ap, final References ref ){
+        return getIdealPractice(ref).getPerceivedDistFrom(ap,ref);
     }
 
     public void printHeaders(final FileWriter fw, final int id){
@@ -76,12 +75,10 @@ public class Identity{
 
     public void print(final FileWriter fw){
         try{
-            fw.append(m_importanceYield.getValue() + ",");
-            fw.append(m_importanceEnv.getValue() + ",");
+            fw.append(m_importanceYield.get() + ",");
+            fw.append(m_importanceEnv.get() + ",");
         }catch(IOException e){ e.printStackTrace(); }
     }
 
-
 };
-
 

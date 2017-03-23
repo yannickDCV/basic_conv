@@ -82,6 +82,7 @@ public class Individual {
 
     public void iter( final double price ){
 
+        System.out.println( "-----------------------" );
         m_practice.update(m_identity, m_evaluation);
         m_accounts.update(m_practice,price);
         m_evaluation.update( m_practice, m_identity, m_norm, m_accounts, m_references);
@@ -90,7 +91,10 @@ public class Individual {
 
         if( Math.random() <= m_evaluation.getNeedForChange() ) {
             m_alternative.setInquiringMode(true);
-            if( m_evaluation.isMajorChangeTriggered( m_alternative, m_identity, m_norm, m_accounts, m_references ) ){ 
+            if( m_evaluation.isMajorChangeTriggered( m_alternative, m_identity, m_norm, m_references ) ){ 
+                System.out.println( "Major Change" );
+                System.out.println( "m_alternative.getYield() = " + m_alternative.getYield() );
+                System.out.println( "m_alternative.getViability() = " + m_alternative.getViability() );
                 m_practice.copy(m_alternative); 
                 m_alternative.reset();
                 // TODO m_needForChange.setValueEqualMin();

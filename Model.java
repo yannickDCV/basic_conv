@@ -38,7 +38,7 @@ public class Model {
 
     public void iter() {
          m_population.iter(m_economy.getPrice());
-          m_economy.iter();
+          // m_economy.iter();
     }
 
     public void initPrint(final FileWriter fw){

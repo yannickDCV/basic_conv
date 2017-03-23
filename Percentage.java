@@ -29,6 +29,7 @@ public class Percentage{
     double m_value;
 
     Percentage( final double value ){ set(value); }
+    Percentage(){ this(0.5); }
     Percentage( final Percentage p ){ this(p.m_value); }
 
     public void set( final double value ){
@@ -40,7 +41,7 @@ public class Percentage{
         m_value = p.m_value;
     }
 
-    public double getValue(){ return m_value; }
+    public double get(){ return m_value; }
 
     private void errorRange( final double x ){
         if ( x < 0. ) { throw new RuntimeException("In Percentage: x can't be inferior than 0"); };

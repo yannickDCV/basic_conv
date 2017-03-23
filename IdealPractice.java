@@ -26,32 +26,11 @@ import java.util.Random;
 
 public class IdealPractice extends AbstractPractice{
 
-    IdealPractice( final int yield, final int env ){ super(yield,env); }
-    IdealPractice(final AbstractPractice ap){ super(ap); }
-
-    public void addYield( final int step ){
-        m_yield_lvl += step;
-        m_yield_lvl = (m_yield_lvl>0) ? m_yield_lvl : 0; 
-    }
-
-    public void addEnv( final int step ){
-        m_env_lvl += step;
-        m_env_lvl = (m_env_lvl>0) ? m_env_lvl : 0; 
-    }
-
-    public void update( final double percentYield, final double percentEnv, final References ref ){
-        if ( percentYield < 0. ) { throw new RuntimeException("In IdealPractice: percentYield can't be inferior than 0"); };
-        if ( percentYield > 1. ) { throw new RuntimeException("In IdealPractice: percentYield can't be superior than 1"); };
-        if ( percentEnv < 0. ) { throw new RuntimeException("In IdealPractice: percentEnv can't be inferior than 0"); };
-        if ( percentEnv > 1. ) { throw new RuntimeException("In IdealPractice: percentEnv can't be superior than 1"); };
-
-        final int maxYield = ref.getMaxYield();
-        final int minYield = ref.getMinYield();
-        final int maxEnv = ref.getMaxEnv();
-        final int minEnv = ref.getMinEnv();
-
-        m_yield_lvl = (int) Math.round( (maxYield-minYield)*percentYield+minYield );
-        m_env_lvl = (int) Math.round( (maxEnv-minEnv)*percentEnv+minEnv );
+    IdealPractice( final Sigmoid percentYield, final Sigmoid percentEnv, final References ref ){
+        super(
+        (int) Math.round( (ref.getMaxYield()-ref.getMinYield())*percentYield.get()+ref.getMinYield() ), // m_yield_lvl
+        (int) Math.round( (ref.getMaxEnv()-ref.getMinEnv())*percentEnv.get()+ref.getMinEnv() ) // m_env_lvl
+        );
     }
 
     public void printHeaders(final FileWriter fw, final int id){

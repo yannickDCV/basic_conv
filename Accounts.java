@@ -40,7 +40,7 @@ public class Accounts{
         m_lastGain = m_gain;
     }
 
-    public double getViability(){ return m_viability.getValue(); }
+    public double getViability(){ return m_viability.get(); }
 
     public void printHeaders(final FileWriter fw, final int id){
         try{
@@ -51,7 +51,7 @@ public class Accounts{
 
     public void print(final FileWriter fw){
         try{
-            fw.append(m_viability.getValue() + ",");
+            fw.append(m_viability.get() + ",");
             fw.append(m_gain + ",");
         }catch(IOException e){ e.printStackTrace(); }
     }

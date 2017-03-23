@@ -33,16 +33,16 @@ public class Population {
 
         for(int i=0; i<m_individuals.length; i++){
 
-            int yieldPr = (int) (Math.random()*100+1);
-            int EnvPr = (int) (Math.random()*100+1);
+            int yieldPr = (int) (Math.random()*100+450);
+            int EnvPr = (int) (Math.random()*100+450);
 
             // FIXME voir erreur sig(0) et sig(1)
             // FIXME voir erreur yieldpr =0 pour References
-            double yieldId = 0.1*Math.random()+0.45;
-            double envId =  0.1*Math.random()+0.45;
+            // double yieldId = 0.1*Math.random()+0.45;
+            // double envId =  0.1*Math.random()+0.45;
 
             RealPractice practice = new RealPractice(yieldPr,EnvPr);
-            Identity identity = new Identity(practice,yieldId,envId);
+            Identity identity = new Identity(practice);
 
             Influences influences = new Influences(i,popSize, 0.1);
             Individual indToAdd = new Individual(i, practice, identity, influences);
